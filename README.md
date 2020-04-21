@@ -3,7 +3,7 @@
 ## Setup
 
 ### Config
-Before launching, create two files in the root directory: `cfg.json` and `credentials.json`
+Before launching, create a mysql database using the schema in `identificator.sql` and two configuration files in the root directory: `cfg.json` and `credentials.json`
 
 `cfg.json`:
 ```json
