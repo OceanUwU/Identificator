@@ -1,6 +1,8 @@
 # Identificator
 
 ## Setup
+
+### Config
 Before launching, create two files in the root directory: `cfg.json` and `credentials.json`
 
 `cfg.json`:
@@ -22,7 +24,10 @@ Before launching, create two files in the root directory: `cfg.json` and `creden
 ```
 with `url` as the URL of the website your identificator server will be accessed from.
 
+
+
 For `credentials.json`, only include client details for the authentication services you're going to use.
+The services defined below are the only ones (currently) available.
 ```json
 {
     "discord": {
@@ -34,4 +39,10 @@ For `credentials.json`, only include client details for the authentication servi
         "secret": "CLIENT_SECRET"
     }
 }
+```
+
+### Running
+```
+npm install
+npm start
 ```
