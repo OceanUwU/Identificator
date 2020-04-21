@@ -5,7 +5,7 @@
 ### Config
 Before launching, create a mysql database using the schema in `identificator.sql` and two configuration files in the root directory: `cfg.json` and `credentials.json`.
 
-demo commands for creating the database as root:
+demo commands for creating the database as root from within the directory this repository is installed:
 ```sql
 CREATE DATABASE identificator;
 CREATE USER 'identifier'@'localhost' IDENTIFIED BY 'CantCrackThisPasswordCauseItsTooGood';
