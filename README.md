@@ -3,7 +3,18 @@
 ## Setup
 
 ### Config
-Before launching, create a mysql database using the schema in `identificator.sql` and two configuration files in the root directory: `cfg.json` and `credentials.json`
+Before launching, create a mysql database using the schema in `identificator.sql` and two configuration files in the root directory: `cfg.json` and `credentials.json`.
+
+demo commands for creating the database as root:
+```sql
+CREATE DATABASE identificator;
+CREATE USER 'identificator'@'localhost' IDENTIFIED BY 'CantCrackThisPasswordCauseItsTooGood';
+GRANT ALL PRIVILEGES ON identificator.* TO 'identificator'@'localhost';
+FLUSH PRIVILEGES;
+USE identificator;
+SOURCE identificator.sql; 
+SHOW COLUMNS FROM users; --test that the database has been created correctly
+```
 
 `cfg.json`:
 ```json
