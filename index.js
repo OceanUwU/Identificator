@@ -68,7 +68,6 @@ app.get('/login/callback', (req, res) => {
     } else if (req.session.hasOwnProperty('redirectUri') && req.session.redirectUri != null) {
         let redirectUri = req.session.redirectUri;
         req.session.redirectUri = null;
-        console.log(req.session.redirectUri)
         let code;
         do {
             code = String();
@@ -83,7 +82,6 @@ app.get('/login/callback', (req, res) => {
 });
 
 app.get('/logout', (req, res) => {
-    console.log(req.headers.host)
     req.logout();
     res.redirect('/');
 });
@@ -101,7 +99,6 @@ app.get('/api/auth', async (req, res) => {
 
 
 async function auth(using, auth_string) {
-    console.log(using)
     let authInfo = [using, auth_string];
     let user = (await promiseConn.query('SELECT * FROM users WHERE (`using` = ?) AND (`auth_string` = ?)', authInfo))[0];
     if (user.length > 0) { //If a user with the specified Discord ID exists,
