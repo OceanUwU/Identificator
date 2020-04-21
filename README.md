@@ -8,12 +8,13 @@ Before launching, create a mysql database using the schema in `identificator.sql
 demo commands for creating the database as root:
 ```sql
 CREATE DATABASE identificator;
-CREATE USER 'identificator'@'localhost' IDENTIFIED BY 'CantCrackThisPasswordCauseItsTooGood';
-GRANT ALL PRIVILEGES ON identificator.* TO 'identificator'@'localhost';
+CREATE USER 'identifier'@'localhost' IDENTIFIED BY 'CantCrackThisPasswordCauseItsTooGood';
+GRANT ALL PRIVILEGES ON identificator.* TO 'identifier'@'localhost';
 FLUSH PRIVILEGES;
 USE identificator;
 SOURCE identificator.sql; 
 SHOW COLUMNS FROM users; --test that the database has been created correctly
+EXIT;
 ```
 
 `cfg.json`:
@@ -25,8 +26,8 @@ SHOW COLUMNS FROM users; --test that the database has been created correctly
     "db": {
         "server": "localhost",
         "port": 3306,
-        "username": "root",
-        "pw": "",
+        "username": "identifier",
+        "pw": "CantCrackThisPasswordCauseItsTooGood",
         "db": "identificator"
     },
 
