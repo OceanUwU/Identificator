@@ -1,10 +1,9 @@
 # Identificator
 
 ## Setup
-
-### Config
 Before launching, create a mysql database using the schema in `identificator.sql` and two configuration files in the root directory: `cfg.json` and `credentials.json`.
 
+### Database
 demo commands for creating the database as root from within the directory this repository is installed:
 ```sql
 CREATE DATABASE identificator;
@@ -17,7 +16,9 @@ SHOW COLUMNS FROM users; --test that the database has been created correctly
 EXIT;
 ```
 
+### Config Files
 `cfg.json`:
+Set `url` as the URL of the website your identificator server will be accessed from.
 ```json
 {
     "url": "http://localhost:8080",
@@ -34,9 +35,6 @@ EXIT;
     "sessSecret": "someRandomString"
 }
 ```
-with `url` as the URL of the website your identificator server will be accessed from.
-
-
 
 For `credentials.json`, only include client details for the authentication services you're going to use.
 The services defined below are the only ones (currently) available.
