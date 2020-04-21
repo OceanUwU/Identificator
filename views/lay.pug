@@ -1,0 +1,37 @@
+doctype html
+html
+    head
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+        link(rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css")
+        block info
+            title Identificator
+    
+    body
+        nav.navbar.navbar-expand-lg.navbar-light.bg-light
+            a.navbar-brand(href="/") Identificator
+            button.navbar-toggler(type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation")
+                span.navbar-toggler-icon
+
+            .collapse.navbar-collapse#navbarSupportedContent
+                ul.navbar-nav.mr-auto
+                    li.nav-item
+                        a.nav-link(href="https://github.com/975miles/Identificator") GitHub
+                    li.nav-item
+                        a.nav-link(href="/examples") Code examples
+                if (user == undefined)
+                    a.nav-link.btn.btn-outline-success(href="/login") Login
+                else
+                    button.nav-link.btn.btn-outline-secondary.dropdown-toggle#userActionsDropdown(role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false")= (user.name != null ? user.name : 'You')
+                    .dropdown-menu.dropdown-menu-right(aria-labelledby="userActionsDropdown")
+                        a.dropdown-item(href=`/u/${user.id}`) Profile
+                        .dropdown-divider
+                        a.dropdown-item(href="/logout") Logout
+        .container-fluid
+            block content
+            script(src="https://code.jquery.com/jquery-3.4.1.slim.min.js")
+            script(src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js")
+            script(src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js")
+            script.
+                $(function () {$('[data-toggle="tooltip"]').tooltip();});

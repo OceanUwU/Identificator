@@ -1,0 +1,26 @@
+extends ./lay
+
+
+block info
+    -
+        var name;
+        if (userFound != undefined)
+            name = (userFound.name == null ? 'Unknown' : userFound.name);
+
+    title
+        if userFound == undefined
+            | User not found
+        else
+            | #{name}'s profile
+        |  - Identificator
+
+block content
+    if userFound == undefined
+        h1 User not found
+    else
+        h1= name
+        a.btn.btn-secondary(href=`/api/user/${userFound.id}/json`) JSON
+        if user != undefined && user.id == userFound.id
+            br
+            br
+            a.btn.btn-lg.btn-primary(href="/edit-profile") Edit Profile

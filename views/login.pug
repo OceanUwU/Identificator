@@ -1,0 +1,20 @@
+extends ./lay
+
+block info
+    title Login - Identificator
+    meta(name="description" content="Login page for Identificator")
+
+block content
+    div(style="text-align: center;")
+        h1 Login with Identificator
+        hr
+        h3 Login with any of the following:
+        -
+            var authImages = {
+                discord: 'https://discordapp.com/assets/fc0b01fe10a0b8c602fb0106d8189d9b.png',
+                google: 'https://developers.google.com/identity/images/btn_google_signin_dark_normal_web.png'
+            }
+        each i in enabledAuthProviders
+            a.btn.btn-outline-dark(href=`/auth/${i}` height=60)
+                img(src=authImages[i] height=46)
+            br

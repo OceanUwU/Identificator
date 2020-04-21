@@ -1,0 +1,26 @@
+extends ./lay
+
+block info
+    title Editing profile - Identificator
+    meta(name="description" content="A page to edit your Identificator profile.")
+
+block content
+    if (user == undefined)
+        h1 You must be logged in to Identificator to use this.
+    else
+        h1 Edit your Identificator profile
+        form(action="#" method="post")
+            label(for="name") Profile name:
+            input.form-control#name(type="text" name="name" value=user.name maxlength=16)
+            label(for="username")
+                | Preferred username
+                button.btn.btn-sm.btn-secondary.rounded-circle(type="button" data-toggle="tooltip" data-placement="top" title="Any app you log in to which uses usernames will try to give you this username first. If that username isn't valid or available, the app will ask you to use another.") ?
+                | :
+            input.form-control#username(type="text" name="username" value=user.preferred_username maxlength=16)
+            br
+            br
+            p 
+                | By clicking submit, you acknowledge that your provided info will be available to ANY person or app immediately.
+                br
+                | Don't include any sensitive info.
+            button.btn.btn-lg.btn-primary(type="submit") Submit
