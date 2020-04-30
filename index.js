@@ -1,4 +1,6 @@
 const path = require('path');
+const url = require('url');
+const querystring = require('querystring');
 const express = require('express');
 const mysql = require('mysql2');
 const passport = require('passport');
@@ -66,7 +68,7 @@ app.get('/login/callback', (req, res) => {
         newlyCreatedUsers.splice(newlyCreatedUsers.indexOf(req.user.id), 1);
         res.redirect('/edit-profile');
     } else if (req.session.hasOwnProperty('redirectUri') && req.session.redirectUri != null) {
-        let redirectUri = req.session.redirectUri;
+        let redirectUri = url.parse(req.session.redirectUri);
         req.session.redirectUri = null;
         let code;
         do {
@@ -76,7 +78,15 @@ app.get('/login/callback', (req, res) => {
             }
         } while (codes.hasOwnProperty(code));
         codes[code] = new Code(req.user.id);
-        res.redirect(`${redirectUri}?code=${code}`);
+        let query;
+        if (redirectUri.query != null)
+            query = querystring.decode(redirectUri.query);
+        else
+            query = {};
+        query.code = code;
+        query = querystring.encode(query);
+        console.log(`${redirectUri.protocol}//${redirectUri.host}${redirectUri.pathname}?${query}`)
+        res.redirect(`${redirectUri.protocol}//${redirectUri.host}${redirectUri.pathname}?${query}`);
     } else
         res.redirect('/');
 });
