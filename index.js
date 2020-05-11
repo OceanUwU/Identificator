@@ -85,7 +85,6 @@ app.get('/login/callback', (req, res) => {
             query = {};
         query.code = code;
         query = querystring.encode(query);
-        console.log(`${redirectUri.protocol}//${redirectUri.host}${redirectUri.pathname}?${query}`)
         res.redirect(`${redirectUri.protocol}//${redirectUri.host}${redirectUri.pathname}?${query}`);
     } else
         res.redirect('/');
