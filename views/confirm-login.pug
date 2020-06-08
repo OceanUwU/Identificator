@@ -1,0 +1,12 @@
+extends ./lay
+
+block info
+    title Identificator - Login
+    meta(name="description" content="A service to implement login to and app quickly.")
+
+block content
+    center
+        h2 You're logged in to Identificator.
+        a.btn.btn-primary(href="/login/callback") Continue to #{host} as #{user.name}
+        |  
+        a.btn.btn-primary(href="/switch") Switch account

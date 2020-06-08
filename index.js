@@ -4,8 +4,17 @@ const querystring = require('querystring');
 const express = require('express');
 const mysql = require('mysql2');
 const passport = require('passport');
+
 const DiscordStrategy = require('passport-discord').Strategy;
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const WordpressStrategy = require('passport-wordpress').Strategy;
+const RedditStrategy = require('passport-reddit').Strategy;
+const GithubStrategy = require('passport-github').Strategy;
+const GitlabStrategy = require('passport-gitlab2').Strategy;
+const FacebookStrategy = require('passport-facebook').Strategy;
+const SteamStrategy = require('passport-steam').Strategy;
+const YandexStrategy = require('passport-yandex').Strategy;
+
 const expresssession = require('express-session');
 const MySQLStore = require('connect-mysql')(expresssession);
 const cookieParser = require('cookie-parser');
@@ -59,8 +68,22 @@ app.get('/login', (req, res) => {
         delete req.session.redirectUri;
     if (req.user == undefined)
         res.render('login', {enabledAuthProviders: enabledAuthProviders});
+    else
+        res.redirect('/confirm-login');
+});
+
+app.get('/confirm-login', (req, res) => {
+    if (req.session.redirectUri == undefined)
+        res.redirect('/');
+    else if (req.user != undefined)
+        res.render('confirm-login', {user: userToSend(req.user), host: url.parse(req.session.redirectUri).host});
     else 
-        res.redirect('/login/callback');
+        res.redirect('/login');
+});
+
+app.get('/switch', (req, res) => {
+    req.logout();
+    res.redirect(`/login?redirect_uri=${req.session.redirectUri}`);
 });
 
 app.get('/login/callback', (req, res) => {
@@ -69,7 +92,7 @@ app.get('/login/callback', (req, res) => {
         res.redirect('/edit-profile');
     } else if (req.session.hasOwnProperty('redirectUri') && req.session.redirectUri != null) {
         let redirectUri = url.parse(req.session.redirectUri);
-        req.session.redirectUri = null;
+        delete req.session.redirectUri;
         let code;
         do {
             code = String();
@@ -85,6 +108,8 @@ app.get('/login/callback', (req, res) => {
             query = {};
         query.code = code;
         query = querystring.encode(query);
+        if (redirectUri.protocol == null)
+            redirectUri.protocol = "http:";
         res.redirect(`${redirectUri.protocol}//${redirectUri.host}${redirectUri.pathname}?${query}`);
     } else
         res.redirect('/');
@@ -148,6 +173,118 @@ if (credentials.hasOwnProperty('google')) {
         },
         async (accessToken, refreshToken, profile, cb) => {
             cb(null, await auth('google', profile.id));
+        }
+    ));
+}
+
+if (credentials.hasOwnProperty('wordpress')) {
+    app.get('/auth/wordpress', passport.authenticate('wordpress', {scope: ['auth']}));
+    app.get('/auth/wordpress/callback', passport.authenticate('wordpress', {failureRedirect: '/login-error'}), (req, res) => res.redirect('/login/callback'));
+
+    passport.use(new WordpressStrategy(
+        {
+            clientID: credentials.wordpress.id,
+            clientSecret: credentials.wordpress.secret,
+            callbackURL: cfg.url+'/auth/wordpress/callback'
+        },
+        async (accessToken, refreshToken, profile, cb) => {
+            cb(null, await auth('wordpress', profile.id));
+        }
+    ));
+}
+
+if (credentials.hasOwnProperty('reddit')) {
+    app.get('/auth/reddit', passport.authenticate('reddit', {scope: ['identity']}));
+    app.get('/auth/reddit/callback', passport.authenticate('reddit', {failureRedirect: '/login-error'}), (req, res) => res.redirect('/login/callback'));
+
+    passport.use(new RedditStrategy(
+        {
+            clientID: credentials.reddit.id,
+            clientSecret: credentials.reddit.secret,
+            callbackURL: cfg.url+'/auth/reddit/callback',
+            state: "identitytime",
+        },
+        async (accessToken, refreshToken, profile, cb) => {
+            cb(null, await auth('reddit', profile.id));
+        }
+    ));
+}
+
+if (credentials.hasOwnProperty('github')) {
+    app.get('/auth/github', passport.authenticate('github', {scope: ['read:user']}));
+    app.get('/auth/github/callback', passport.authenticate('github', {failureRedirect: '/login-error'}), (req, res) => res.redirect('/login/callback'));
+
+    passport.use(new GithubStrategy(
+        {
+            clientID: credentials.github.id,
+            clientSecret: credentials.github.secret,
+            callbackURL: cfg.url+'/auth/github/callback'
+        },
+        async (accessToken, refreshToken, profile, cb) => {
+            cb(null, await auth('github', profile.id));
+        }
+    ));
+}
+
+if (credentials.hasOwnProperty('gitlab')) {
+    app.get('/auth/gitlab', passport.authenticate('gitlab', {scope: ['read_user']}));
+    app.get('/auth/gitlab/callback', passport.authenticate('gitlab', {failureRedirect: '/login-error'}), (req, res) => res.redirect('/login/callback'));
+
+    passport.use(new GitlabStrategy(
+        {
+            clientID: credentials.gitlab.id,
+            clientSecret: credentials.gitlab.secret,
+            callbackURL: cfg.url+'/auth/gitlab/callback'
+        },
+        async (accessToken, refreshToken, profile, cb) => {
+            cb(null, await auth('gitlab', profile.id));
+        }
+    ));
+}
+
+if (credentials.hasOwnProperty('facebook')) {
+    app.get('/auth/facebook', passport.authenticate('facebook', {scope: []}));
+    app.get('/auth/facebook/callback', passport.authenticate('facebook', {failureRedirect: '/login-error'}), (req, res) => res.redirect('/login/callback'));
+
+    passport.use(new FacebookStrategy(
+        {
+            clientID: credentials.facebook.id,
+            clientSecret: credentials.facebook.secret,
+            callbackURL: cfg.url+'/auth/facebook/callback'
+        },
+        async (accessToken, refreshToken, profile, cb) => {
+            cb(null, await auth('facebook', profile.id));
+        }
+    ));
+}
+
+if (credentials.hasOwnProperty('steam')) {
+    app.get('/auth/steam', passport.authenticate('steam', {scope: []}));
+    app.get('/auth/steam/callback', passport.authenticate('steam', {failureRedirect: '/login-error'}), (req, res) => res.redirect('/login/callback'));
+
+    passport.use(new SteamStrategy(
+        {
+            apiKey: credentials.steam,
+            returnURL: cfg.url+'/auth/steam/callback'
+        },
+        async (identifier, profile, cb) => {
+            cb(null, await auth('steam', profile.id));
+        }
+    ));
+}
+
+if (credentials.hasOwnProperty('yandex')) {
+    app.get('/auth/yandex', passport.authenticate('yandex', {scope: []}));
+    app.get('/auth/yandex/callback', passport.authenticate('yandex', {failureRedirect: '/login-error'}), (req, res) => res.redirect('/login/callback'));
+
+    passport.use(new YandexStrategy(
+        {
+            clientID: credentials.yandex.id,
+            clientSecret: credentials.yandex.secret,
+            callbackURL: cfg.url+'/auth/yandex/callback'
+        },
+        async (accessToken, refreshToken, profile, cb) => {
+            cb(null, await auth('yandex', profile.id));
         }
     ));
 }
