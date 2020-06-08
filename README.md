@@ -47,6 +47,31 @@ The services defined below are the only ones (currently) available.
     "google": {
         "id": "CLIENT_ID",
         "secret": "CLIENT_SECRET"
+    },
+    "wordpress": {
+        "id": "CLIENT_ID",
+        "secret": "CLIENT_SECRET"
+    },
+    "reddit": {
+        "id": "CLIENT_ID",
+        "secret": "CLIENT_SECRET"
+    },
+    "github": {
+        "id": "CLIENT_ID",
+        "secret": "CLIENT_SECRET"
+    },
+    "gitlab": {
+        "id": "CLIENT_ID",
+        "secret": "CLIENT_SECRET"
+    },
+    "facebook": {
+        "id": "CLIENT_ID",
+        "secret": "CLIENT_SECRET"
+    },
+    "steam": "API_KEY",
+    "yandex": {
+        "id": "CLIENT_ID",
+        "secret": "CLIENT_SECRET"
     }
 }
 ```
