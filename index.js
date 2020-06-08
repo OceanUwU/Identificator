@@ -147,7 +147,7 @@ async function auth(using, auth_string) {
 
 if (credentials.hasOwnProperty('discord')) {
     app.get('/auth/discord', passport.authenticate('discord', {scope: ['identify']}));
-    app.get('/auth/discord/callback', passport.authenticate('discord', twitch{failureRedirect: '/login-error'}), (req, res) => res.redirect('/confirm-login'));
+    app.get('/auth/discord/callback', passport.authenticate('discord', {failureRedirect: '/login-error'}), (req, res) => res.redirect('/confirm-login'));
 
     passport.use(new DiscordStrategy(
         {
@@ -163,7 +163,7 @@ if (credentials.hasOwnProperty('discord')) {
 
 if (credentials.hasOwnProperty('google')) {
     app.get('/auth/google', passport.authenticate('google', {scope: ['profile']}));
-    app.get('/auth/google/callback', passport.authenticate('google', twitch{failureRedirect: '/login-error'}), (req, res) => res.redirect('/confirm-login'));
+    app.get('/auth/google/callback', passport.authenticate('google', {failureRedirect: '/login-error'}), (req, res) => res.redirect('/confirm-login'));
 
     passport.use(new GoogleStrategy(
         {
@@ -179,7 +179,7 @@ if (credentials.hasOwnProperty('google')) {
 
 if (credentials.hasOwnProperty('wordpress')) {
     app.get('/auth/wordpress', passport.authenticate('wordpress', {scope: ['auth']}));
-    app.get('/auth/wordpress/callback', passport.authenticate('wordpress', twitch{failureRedirect: '/login-error'}), (req, res) => res.redirect('/confirm-login'));
+    app.get('/auth/wordpress/callback', passport.authenticate('wordpress', {failureRedirect: '/login-error'}), (req, res) => res.redirect('/confirm-login'));
 
     passport.use(new WordpressStrategy(
         {
@@ -195,7 +195,7 @@ if (credentials.hasOwnProperty('wordpress')) {
 
 if (credentials.hasOwnProperty('reddit')) {
     app.get('/auth/reddit', passport.authenticate('reddit', {scope: ['identity']}));
-    app.get('/auth/reddit/callback', passport.authenticate('reddit', twitch{failureRedirect: '/login-error'}), (req, res) => res.redirect('/confirm-login'));
+    app.get('/auth/reddit/callback', passport.authenticate('reddit', {failureRedirect: '/login-error'}), (req, res) => res.redirect('/confirm-login'));
 
     passport.use(new RedditStrategy(
         {
@@ -212,7 +212,7 @@ if (credentials.hasOwnProperty('reddit')) {
 
 if (credentials.hasOwnProperty('github')) {
     app.get('/auth/github', passport.authenticate('github', {scope: ['read:user']}));
-    app.get('/auth/github/callback', passport.authenticate('github', twitch{failureRedirect: '/login-error'}), (req, res) => res.redirect('/confirm-login'));
+    app.get('/auth/github/callback', passport.authenticate('github', {failureRedirect: '/login-error'}), (req, res) => res.redirect('/confirm-login'));
 
     passport.use(new GithubStrategy(
         {
@@ -228,7 +228,7 @@ if (credentials.hasOwnProperty('github')) {
 
 if (credentials.hasOwnProperty('gitlab')) {
     app.get('/auth/gitlab', passport.authenticate('gitlab', {scope: ['read_user']}));
-    app.get('/auth/gitlab/callback', passport.authenticate('gitlab', twitch{failureRedirect: '/login-error'}), (req, res) => res.redirect('/confirm-login'));
+    app.get('/auth/gitlab/callback', passport.authenticate('gitlab', {failureRedirect: '/login-error'}), (req, res) => res.redirect('/confirm-login'));
 
     passport.use(new GitlabStrategy(
         {
@@ -244,7 +244,7 @@ if (credentials.hasOwnProperty('gitlab')) {
 
 if (credentials.hasOwnProperty('facebook')) {
     app.get('/auth/facebook', passport.authenticate('facebook', {scope: []}));
-    app.get('/auth/facebook/callback', passport.authenticate('facebook', twitch{failureRedirect: '/login-error'}), (req, res) => res.redirect('/confirm-login'));
+    app.get('/auth/facebook/callback', passport.authenticate('facebook', {failureRedirect: '/login-error'}), (req, res) => res.redirect('/confirm-login'));
 
     passport.use(new FacebookStrategy(
         {
@@ -260,7 +260,7 @@ if (credentials.hasOwnProperty('facebook')) {
 
 if (credentials.hasOwnProperty('steam')) {
     app.get('/auth/steam', passport.authenticate('steam', {scope: []}));
-    app.get('/auth/steam/callback', passport.authenticate('steam', twitch{failureRedirect: '/login-error'}), (req, res) => res.redirect('/confirm-login'));
+    app.get('/auth/steam/callback', passport.authenticate('steam', {failureRedirect: '/login-error'}), (req, res) => res.redirect('/confirm-login'));
 
     passport.use(new SteamStrategy(
         {
@@ -275,7 +275,7 @@ if (credentials.hasOwnProperty('steam')) {
 
 if (credentials.hasOwnProperty('yandex')) {
     app.get('/auth/yandex', passport.authenticate('yandex', {scope: []}));
-    app.get('/auth/yandex/callback', passport.authenticate('yandex', twitch{failureRedirect: '/login-error'}), (req, res) => res.redirect('/confirm-login'));
+    app.get('/auth/yandex/callback', passport.authenticate('yandex', {failureRedirect: '/login-error'}), (req, res) => res.redirect('/confirm-login'));
 
     passport.use(new YandexStrategy(
         {
