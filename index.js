@@ -76,13 +76,13 @@ app.get('/login', (req, res) => {
 });
 
 app.get('/confirm-login', (req, res) => {
-    if (req.session.redirectUri == undefined)
-        res.redirect('/');
-    else if (req.user != undefined) {
+    if (req.user != undefined) {
         if (newlyCreatedUsers.includes(req.user.id)) {
             newlyCreatedUsers.splice(newlyCreatedUsers.indexOf(req.user.id), 1);
             res.redirect('/edit-profile');
-        } else 
+        } else if (req.session.redirectUri == undefined)
+            res.redirect('/');
+        else 
             res.render('confirm-login', {user: userToSend(req.user), host: url.parse(req.session.redirectUri).host});
     } else 
         res.redirect('/login');
