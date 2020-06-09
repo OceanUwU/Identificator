@@ -152,7 +152,7 @@ async function auth(using, auth_string) {
         } while (idTaken === 1);
         await promiseConn.query('INSERT INTO users (`id`, `using`, `auth_string`) VALUES (?)', [[newId, using, auth_string]]);
         newlyCreatedUsers.push(newId);
-        logAction('Sign-up', newId);
+        logAction(`Sign-up through ${using}`, newId);
         return newId;
     }
 }
