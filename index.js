@@ -147,7 +147,7 @@ async function auth(using, auth_string) {
             newId = String();
             for (let i = 0; i < idLength; i++)
                 newId += idCharacters.charAt(Math.floor(Math.random() * idCharacters.length));
-            idTaken = (await promiseConn.query('SELECT COUNT(1) as idTaken FROM USERS WHERE id = ?', newId))[0][0].idTaken;
+            idTaken = (await promiseConn.query('SELECT COUNT(1) as idTaken FROM users WHERE id = ?', newId))[0][0].idTaken;
             console.log(`${newId}: ${idTaken}`);
         } while (idTaken === 1);
         await promiseConn.query('INSERT INTO users (`id`, `using`, `auth_string`) VALUES (?)', [[newId, using, auth_string]]);
