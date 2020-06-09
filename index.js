@@ -94,7 +94,6 @@ app.get('/switch', (req, res) => {
 });
 
 app.get('/login/callback', (req, res) => {
-    console.log(newlyCreatedUsers, req.user.id);
     if (req.session.hasOwnProperty('redirectUri') && req.session.redirectUri != null) {
         let redirectUri = url.parse(req.session.redirectUri);
         delete req.session.redirectUri;
@@ -115,6 +114,7 @@ app.get('/login/callback', (req, res) => {
         query = querystring.encode(query);
         if (redirectUri.protocol == null)
             redirectUri.protocol = "http:";
+        logAction(`Continued to ${redirectUri.host}`, req.user.id);
         res.redirect(`${redirectUri.protocol}//${redirectUri.host}${redirectUri.pathname}?${query}`);
     } else
         res.redirect('/');
@@ -138,9 +138,10 @@ app.get('/api/auth', async (req, res) => {
 
 
 async function auth(using, auth_string) {
-    let user = (await promiseConn.query('SELECT * FROM users WHERE (`using` = ?) AND (`auth_string` = ?)', [using, auth_string]))[0];
-    if (user.length > 0) { //If a user with the specified auth string exists,
-        return user[0].id; //store the ID of that user in the session.
+    let users = (await promiseConn.query('SELECT * FROM users WHERE (`using` = ?) AND (`auth_string` = ?)', [using, auth_string]))[0];
+    if (users.length > 0) { //If a user with the specified auth string exists,
+        logAction(`Sign-in through ${using}`, users[0].id);
+        return users[0].id; //store the ID of that user in the session.
     } else { //If a user with the specified auth string doesn't already exist, create a new one.
         let newId, idTaken;
         do {
@@ -148,10 +149,10 @@ async function auth(using, auth_string) {
             for (let i = 0; i < idLength; i++)
                 newId += idCharacters.charAt(Math.floor(Math.random() * idCharacters.length));
             idTaken = (await promiseConn.query('SELECT COUNT(1) as idTaken FROM users WHERE id = ?', newId))[0][0].idTaken;
-            console.log(`${newId}: ${idTaken}`);
         } while (idTaken === 1);
         await promiseConn.query('INSERT INTO users (`id`, `using`, `auth_string`) VALUES (?)', [[newId, using, auth_string]]);
         newlyCreatedUsers.push(newId);
+        logAction('Sign-up', newId);
         return newId;
     }
 }
@@ -335,6 +336,10 @@ function userToSend(user) {
         id: user.id,
         name: user.name,
     };
+}
+
+function logAction(event, userId) {
+    console.log(`${event}: ${userId} at ${new Date().toUTCString}`);
 }
 
 class Code {
