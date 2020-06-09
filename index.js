@@ -339,7 +339,7 @@ function userToSend(user) {
 }
 
 function logAction(event, userId) {
-    console.log(`${event}: ${userId} at ${new Date().toUTCString}`);
+    console.log(`${event}: ${userId} at ${new Date().toUTCString()}`);
 }
 
 class Code {
