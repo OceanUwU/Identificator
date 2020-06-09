@@ -20,6 +20,9 @@ const MySQLStore = require('connect-mysql')(expresssession);
 const cookieParser = require('cookie-parser');
 //const crypto = require('crypto'); //crypto.createHmac('sha512', 'identificator').update(PASSWORD).digest('hex');
 
+const idLength = 16;
+const idCharacters = 'abcdefghijklmnopqrstuvwxyz0123456789';
+
 const codeCharacters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 const codeLifespan = 5 * (1000 * 60); //5 minutes
 const codeClearInterval = 1 * (1000 * 60); //1 minute
@@ -75,9 +78,13 @@ app.get('/login', (req, res) => {
 app.get('/confirm-login', (req, res) => {
     if (req.session.redirectUri == undefined)
         res.redirect('/');
-    else if (req.user != undefined)
-        res.render('confirm-login', {user: userToSend(req.user), host: url.parse(req.session.redirectUri).host});
-    else 
+    else if (req.user != undefined) {
+        if (newlyCreatedUsers.includes(req.user.id)) {
+            newlyCreatedUsers.splice(newlyCreatedUsers.indexOf(req.user.id), 1);
+            res.redirect('/edit-profile');
+        } else 
+            res.render('confirm-login', {user: userToSend(req.user), host: url.parse(req.session.redirectUri).host});
+    } else 
         res.redirect('/login');
 });
 
@@ -87,10 +94,8 @@ app.get('/switch', (req, res) => {
 });
 
 app.get('/login/callback', (req, res) => {
-    if (newlyCreatedUsers.includes(req.user.id)) {
-        newlyCreatedUsers.splice(newlyCreatedUsers.indexOf(req.user.id), 1);
-        res.redirect('/edit-profile');
-    } else if (req.session.hasOwnProperty('redirectUri') && req.session.redirectUri != null) {
+    console.log(newlyCreatedUsers, req.user.id);
+    if (req.session.hasOwnProperty('redirectUri') && req.session.redirectUri != null) {
         let redirectUri = url.parse(req.session.redirectUri);
         delete req.session.redirectUri;
         let code;
@@ -133,15 +138,21 @@ app.get('/api/auth', async (req, res) => {
 
 
 async function auth(using, auth_string) {
-    let authInfo = [using, auth_string];
-    let user = (await promiseConn.query('SELECT * FROM users WHERE (`using` = ?) AND (`auth_string` = ?)', authInfo))[0];
-    if (user.length > 0) { //If a user with the specified Discord ID exists,
+    let user = (await promiseConn.query('SELECT * FROM users WHERE (`using` = ?) AND (`auth_string` = ?)', [using, auth_string]))[0];
+    if (user.length > 0) { //If a user with the specified auth string exists,
         return user[0].id; //store the ID of that user in the session.
-    } else { //If a user with the specified Discord ID doesn't already exist, create a new one.
-        await promiseConn.query('INSERT INTO users (`using`, `auth_string`) VALUES (?)', [authInfo]);
-        let newID = (await promiseConn.query('SELECT * FROM users WHERE (`using` = ?) AND (`auth_string` = ?)', authInfo))[0][0].id;
-        newlyCreatedUsers.push(newID);
-        return newID;
+    } else { //If a user with the specified auth string doesn't already exist, create a new one.
+        let newId, idTaken;
+        do {
+            newId = String();
+            for (let i = 0; i < idLength; i++)
+                newId += idCharacters.charAt(Math.floor(Math.random() * idCharacters.length));
+            idTaken = (await promiseConn.query('SELECT COUNT(1) as idTaken FROM USERS WHERE id = ?', newId))[0][0].idTaken;
+            console.log(`${newId}: ${idTaken}`);
+        } while (idTaken === 1);
+        await promiseConn.query('INSERT INTO users (`id`, `using`, `auth_string`) VALUES (?)', [[newId, using, auth_string]]);
+        newlyCreatedUsers.push(newId);
+        return newId;
     }
 }
 
@@ -289,13 +300,13 @@ if (credentials.hasOwnProperty('yandex')) {
     ));
 }
 
-app.get('/u/:userID', async (req, res) => {
+app.get('/u/:userID/', async (req, res) => {
     let usersFound = (await promiseConn.query('SELECT * FROM users WHERE id = ?', req.params.userID))[0];
     if (usersFound.length == 0)
         usersFound = [undefined];
     res.render('profile', {user: userToSend(req.user), userFound: userToSend(usersFound[0])});
 });
-app.get('/api/user/:userID/json', async (req, res) => {
+app.get('/u/:userID/json', async (req, res) => {
     let usersFound = (await promiseConn.query('SELECT * FROM users WHERE id = ?', req.params.userID))[0];
     if (usersFound.length == 0)
         return res.send('User doesn\'t exist');
@@ -309,17 +320,13 @@ app.get('/edit-profile', (req, res) => res.render('edit-profile', {user: userToS
 app.post('/edit-profile', async (req, res) => {
     if (req.user == undefined) return;
     if (typeof req.body.name != 'string') return;
-    if (typeof req.body.username != 'string') return;
     if (req.body.name.length > 16) return;
     if (req.body.name.length == 0)
         req.body.name = null;
-    if (req.body.username.length > 16) return;
-    if (req.body.username.length == 0)
-        req.body.username = null;
-    await promiseConn.query('UPDATE users SET name = ?, preferred_username = ? WHERE id = ?', [req.body.name, req.body.username, req.user.id]);
+    await promiseConn.query('UPDATE users SET name = ? WHERE id = ?', [req.body.name, req.user.id]);
     if (req.session.hasOwnProperty('redirectUri') && req.session.redirectUri != null)
-        res.redirect('/login/callback');
-    else res.redirect(`/u/${req.user.id}`);
+        res.redirect('/confirm-login');
+    else res.redirect(`/u/${req.user.id}/`);
 });
 
 function userToSend(user) {
@@ -327,7 +334,6 @@ function userToSend(user) {
     return {
         id: user.id,
         name: user.name,
-        preferred_username: user.preferred_username,
     };
 }
 

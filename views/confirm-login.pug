@@ -7,6 +7,6 @@ block info
 block content
     center
         h2 You're logged in to Identificator.
-        a.btn.btn-primary(href="/login/callback") Continue to #{host} as #{user.name}
+        a.btn.btn-primary(href="/login/callback") Continue to #{host} #{user.name != null ? `as ${user.name}` : 'with this account'}
         |  
         a.btn.btn-primary(href="/switch") Switch account

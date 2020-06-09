@@ -19,7 +19,7 @@ block content
         h1 User not found
     else
         h1= name
-        a.btn.btn-secondary(href=`/api/user/${userFound.id}/json`) JSON
+        a.btn.btn-secondary(href='json') JSON
         if user != undefined && user.id == userFound.id
             br
             br

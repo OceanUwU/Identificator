@@ -9,6 +9,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 
+DROP TABLE IF EXISTS `sessions`;
 CREATE TABLE IF NOT EXISTS `sessions` (
   `sid` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
   `session` text COLLATE utf8_unicode_ci NOT NULL,
@@ -16,13 +17,12 @@ CREATE TABLE IF NOT EXISTS `sessions` (
   PRIMARY KEY (`sid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
+DROP TABLE IF EXISTS `users`;
 CREATE TABLE IF NOT EXISTS `users` (
-  `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `id` tinytext COLLATE utf8mb4_bin NOT NULL,
   `name` tinytext COLLATE utf8mb4_bin DEFAULT NULL,
-  `preferred_username` tinytext COLLATE utf8mb4_bin DEFAULT NULL,
   `using` tinytext COLLATE utf8mb4_bin NOT NULL COMMENT 'what the user is using to log in',
-  `auth_string` tinytext COLLATE utf8mb4_bin NOT NULL,
-  PRIMARY KEY (`id`)
+  `auth_string` tinytext COLLATE utf8mb4_bin NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 COMMIT;
 

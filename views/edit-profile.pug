@@ -12,12 +12,6 @@ block content
         form(action="#" method="post")
             label(for="name") Profile name:
             input.form-control#name(type="text" name="name" value=user.name maxlength=16)
-            label(for="username")
-                | Preferred username
-                button.btn.btn-sm.btn-secondary.rounded-circle(type="button" data-toggle="tooltip" data-placement="top" title="Any app you log in to which uses usernames will try to give you this username first. If that username isn't valid or available, the app will ask you to use another.") ?
-                | :
-            input.form-control#username(type="text" name="username" value=user.preferred_username maxlength=16)
-            br
             br
             p 
                 | By clicking submit, you acknowledge that your provided info will be available to ANY person or app immediately.
