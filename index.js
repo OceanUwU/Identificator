@@ -391,7 +391,6 @@ var upload = multer({
 
 app.post('/edit-profile', async (req, res, next) => {
     upload(req, res, async err => {
-        console.log(req.body)
         if (err instanceof multer.MulterError)
             return res.send("error uploading avatar")
 
