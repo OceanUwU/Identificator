@@ -8,7 +8,6 @@ SET time_zone = "+00:00";
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
 /*!40101 SET NAMES utf8mb4 */;
 
-
 DROP TABLE IF EXISTS `sessions`;
 CREATE TABLE IF NOT EXISTS `sessions` (
   `sid` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
@@ -20,9 +19,10 @@ CREATE TABLE IF NOT EXISTS `sessions` (
 DROP TABLE IF EXISTS `users`;
 CREATE TABLE IF NOT EXISTS `users` (
   `id` tinytext COLLATE utf8mb4_bin NOT NULL,
-  `name` tinytext COLLATE utf8mb4_bin DEFAULT NULL,
   `using` tinytext COLLATE utf8mb4_bin NOT NULL COMMENT 'what the user is using to log in',
-  `auth_string` tinytext COLLATE utf8mb4_bin NOT NULL
+  `auth_string` tinytext COLLATE utf8mb4_bin NOT NULL,
+  `name` tinytext COLLATE utf8mb4_bin DEFAULT NULL,
+  `website` tinytext COLLATE utf8mb4_bin DEFAULT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 COMMIT;
 

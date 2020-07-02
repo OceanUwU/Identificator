@@ -38,6 +38,8 @@ Set `url` as the URL of the website your identificator server will be accessed f
 
 For `credentials.json`, only include client details for the authentication services you're going to use.
 The services defined below are the only ones (currently) available.
+You can order them in the order that you want them to show up on the login page.
+If you're just setting up Identificator for development or testing and you'll need lots of accounts, you should use Auth0, cause you can make accounts really fast on it
 ```json
 {
     "discord": {
@@ -45,6 +47,11 @@ The services defined below are the only ones (currently) available.
         "secret": "CLIENT_SECRET"
     },
     "google": {
+        "id": "CLIENT_ID",
+        "secret": "CLIENT_SECRET"
+    },
+    "auth0": {
+        "domain": "YOUR_APP_DOMAIN.auth0.com",
         "id": "CLIENT_ID",
         "secret": "CLIENT_SECRET"
     },

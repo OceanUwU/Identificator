@@ -1,7 +1,10 @@
+const fs = require('fs');
 const path = require('path');
 const url = require('url');
 const querystring = require('querystring');
 const express = require('express');
+const multer = require('multer');
+const Jimp = require('jimp');
 const mysql = require('mysql2');
 const passport = require('passport');
 
@@ -14,6 +17,7 @@ const GitlabStrategy = require('passport-gitlab2').Strategy;
 const FacebookStrategy = require('passport-facebook').Strategy;
 const SteamStrategy = require('passport-steam').Strategy;
 const YandexStrategy = require('passport-yandex').Strategy;
+const Auth0Strategy = require('passport-auth0').Strategy;
 
 const expresssession = require('express-session');
 const MySQLStore = require('connect-mysql')(expresssession);
@@ -301,12 +305,38 @@ if (credentials.hasOwnProperty('yandex')) {
     ));
 }
 
+if (credentials.hasOwnProperty('auth0')) {
+    app.get('/auth/auth0/', (req, res) => res.redirect(`https://${credentials.auth0.domain}/v2/logout?returnTo=${encodeURIComponent(cfg.url+"/auth/auth0/real")}&client_id=${credentials.auth0.id}`));
+    app.get('/auth/auth0/real', passport.authenticate('auth0', {scope: 'openid'}));
+    app.get('/auth/auth0/callback', passport.authenticate('auth0', {failureRedirect: '/login-error'}), (req, res) => res.redirect('/confirm-login'));
+
+    if (credentials.auth0.hasOwnProperty("connections"))
+        for (i of credentials.auth0.connections) {
+            app.get('/auth/'+i, (req, res) => res.redirect('/auth/auth0'));
+            enabledAuthProviders.push(i);
+        }
+
+    passport.use(new Auth0Strategy(
+        {
+            domain: credentials.auth0.domain,
+            clientID: credentials.auth0.id,
+            clientSecret: credentials.auth0.secret,
+            callbackURL: cfg.url+'/auth/auth0/callback',
+            state: true
+        },
+        async (accessToken, refreshToken, extraParams, profile, cb) => {
+            cb(null, await auth('auth0', profile.id));
+        }
+    ));
+}
+
 app.get('/u/:userID/', async (req, res) => {
     let usersFound = (await promiseConn.query('SELECT * FROM users WHERE id = ?', req.params.userID))[0];
     if (usersFound.length == 0)
         usersFound = [undefined];
     res.render('profile', {user: userToSend(req.user), userFound: userToSend(usersFound[0])});
 });
+
 app.get('/u/:userID/json', async (req, res) => {
     let usersFound = (await promiseConn.query('SELECT * FROM users WHERE id = ?', req.params.userID))[0];
     if (usersFound.length == 0)
@@ -314,20 +344,97 @@ app.get('/u/:userID/json', async (req, res) => {
     res.send(userToSend(usersFound[0]));
 });
 
+app.get('/avatar/:userID.png', async (req, res) => {
+    //validate userID
+    let usersFound = (await promiseConn.query('SELECT * FROM users WHERE id = ?', req.params.userID))[0];
+    if (usersFound.length == 0)
+        return res.send('User doesn\'t exist');
+
+    //validate image size
+    let size = (req.query.hasOwnProperty("size") ? Number(req.query.size) : 256);
+    if (isNaN(size))
+        return res.send("avatar size must be a number");
+    else if (size > 256)
+        return res.send("avatar size must be at most 256");
+    else if (size <= 0)
+        return res.send("avatar size must be at least 1");
+
+    //find and send image
+    let avatar;
+    let path = "store/avatars/"+req.params.userID+".png";
+    if (!fs.existsSync(path))
+        path = "public/i/default-avatar.png";
+    await Jimp.read(path)
+        .then(async image => {
+            if (req.query.hasOwnProperty("nt"))
+                image.opaque();
+            avatar = await image
+                .resize(size, size)
+                .getBufferAsync(Jimp.MIME_PNG);
+        });
+    
+    res.contentType("png");
+    res.end(avatar, "binary")
+});
+
 app.get('/', (req, res) => res.render('index', {user: userToSend(req.user)}));
 app.get('/examples', (req, res) => res.render('examples', {user: userToSend(req.user)}));
 
 app.get('/edit-profile', (req, res) => res.render('edit-profile', {user: userToSend(req.user)}));
-app.post('/edit-profile', async (req, res) => {
-    if (req.user == undefined) return;
-    if (typeof req.body.name != 'string') return;
-    if (req.body.name.length > 16) return;
-    if (req.body.name.length == 0)
-        req.body.name = null;
-    await promiseConn.query('UPDATE users SET name = ? WHERE id = ?', [req.body.name, req.user.id]);
-    if (req.session.hasOwnProperty('redirectUri') && req.session.redirectUri != null)
-        res.redirect('/confirm-login');
-    else res.redirect(`/u/${req.user.id}/`);
+
+var upload = multer({
+    dest: "temp",
+    limits: {
+        fileSize: 1 * 1024 * 1024,
+    }
+}).single("avatar");
+
+app.post('/edit-profile', async (req, res, next) => {
+    upload(req, res, async err => {
+        console.log(req.body)
+        if (err instanceof multer.MulterError)
+            return res.send("error uploading avatar")
+
+        if (req.user == undefined) return;
+
+        //validate name
+        if (typeof req.body.name != 'string') return;
+        if (req.body.name.length > 16) return;
+        if (req.body.name.length == 0)
+            req.body.name = null;
+
+        if (req.body.website == undefined) return
+        if (typeof req.body.website != 'string') return;
+        if (req.body.website.length > 200) return;
+        if (req.body.website.length == 0)
+            req.body.website = null;
+        if (req.body.website == `${cfg.url}/u/${req.user.id}`)
+            req.body.website = null;
+        if (req.body.website != null && !(req.body.website.startsWith("http://") || req.body.website.startsWith("https://") || req.body.website.startsWith("://")))
+            req.body.website = "http://" + req.body.website;
+
+        //validate and save avatar image
+        if (req.file != undefined) {
+            let imageIsSet = false;
+            await Jimp.read(req.file.path)
+                .then(image => {
+                    image
+                        .resize(256, 256)
+                        .write("store/avatars/"+req.user.id+".png");
+                    imageIsSet = true;
+                })
+                .catch(err => {
+                    return res.send("error reading avatar file. is it the wrong format? is it corrupted?");
+                });
+            fs.unlinkSync(req.file.path); //delete temp file
+            if (!imageIsSet) return;
+        }
+        //update user
+        await promiseConn.query('UPDATE users SET name = ?, website = ? WHERE id = ?', [req.body.name, req.body.website, req.user.id]);
+        if (req.session.hasOwnProperty('redirectUri') && req.session.redirectUri != null)
+            res.redirect('/confirm-login');
+        else res.redirect(`/u/${req.user.id}/`);
+    });
 });
 
 function userToSend(user) {
@@ -335,6 +442,8 @@ function userToSend(user) {
     return {
         id: user.id,
         name: user.name,
+        website: (user.website == null ? `${cfg.url}/u/${user.id}` : user.website),
+        avatarURL: cfg.url + `/avatar/${user.id}.png`,
     };
 }
 

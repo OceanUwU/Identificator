@@ -10,17 +10,25 @@ block content
         hr
         h3 Login with any of the following:
         -
-            const imageDir = "/i/auth-images";
+            const imageDir = "/i/auth-images/";
             const authImages = {
                 discord: 'https://discordapp.com/assets/fc0b01fe10a0b8c602fb0106d8189d9b.png',
                 google: 'https://developers.google.com/identity/images/btn_google_signin_dark_normal_web.png',
                 wordpress: 'https://s.w.org/style/images/about/WordPress-logotype-standard.png',
-                reddit: imageDir+"/reddit.png",
+                reddit: imageDir+"reddit.png",
                 github: 'https://github.githubassets.com/images/modules/logos_page/GitHub-Logo.png',
                 gitlab: 'https://about.gitlab.com/images/press/logo/png/gitlab-logo-gray-rgb.png',
                 facebook: 'https://scontent.flhr3-1.fna.fbcdn.net/v/t39.2365-6/17639236_1785253958471956_282550797298827264_n.png?_nc_cat=105&_nc_sid=ad8a9d&_nc_ohc=RHl69GirtDYAX_8vx_Z&_nc_ht=scontent.flhr3-1.fna&oh=7b16784ddb012103756196a4baef5df3&oe=5F027D16',
                 steam: 'https://steamcommunity-a.akamaihd.net/public/images/signinthroughsteam/sits_01.png',
                 yandex: 'https://avatars.mds.yandex.net/get-bunker/50064/9c8dea8c94b9bea5ef1677932c8272cbfca4995a/orig',
+                auth0: imageDir+"auth0.png",
+                amazon: "https://m.media-amazon.com/images/G/01/mobile-apps/dex/login-with-amazon/btnLWA_gold_276x64._TTH_.png",
+                apple: "https://developer.apple.com/design/human-interface-guidelines/sign-in-with-apple/images/apple-id-sign-in-with.png",
+                dropbox: "https://aem.dropbox.com/cms/content/dam/dropbox/www/en-us/branding/dropbox-logo@2x.jpg",
+                linkedin: "https://content.linkedin.com/content/dam/developer/global/en_US/site/img/signin-button.png",
+                twitter: "https://cdn.cms-twdigitalassets.com/content/dam/developer-twitter/icons/sign-in-with-twitter-gray-png-img-fullhd-medium.png.img.fullhd.medium.png",
+                microsoft: "https://docs.microsoft.com/en-us/azure/active-directory/develop/media/howto-add-branding-in-azure-ad-apps/ms-symbollockup_signin_dark.png",
+                yahoo: "https://s.yimg.com/rz/p/yahoo_frontpage_en-US_s_f_p_205x58_frontpage_2x.png",
             };
         each i in enabledAuthProviders
             a.btn.btn-outline-dark(href=`/auth/${i}` height=60)
