@@ -3,3 +3,4 @@ cfg.json
 credentials.json
 temp
 store
+/data.db

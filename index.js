@@ -5,7 +5,6 @@ const querystring = require('querystring');
 const express = require('express');
 const multer = require('multer');
 const Jimp = require('jimp');
-const mysql = require('mysql2');
 const passport = require('passport');
 
 const DiscordStrategy = require('passport-discord').Strategy;
@@ -20,7 +19,6 @@ const YandexStrategy = require('passport-yandex').Strategy;
 const Auth0Strategy = require('passport-auth0').Strategy;
 
 const expresssession = require('express-session');
-const MySQLStore = require('connect-mysql')(expresssession);
 const cookieParser = require('cookie-parser');
 //const crypto = require('crypto'); //crypto.createHmac('sha512', 'identificator').update(PASSWORD).digest('hex');
 
@@ -35,15 +33,7 @@ const cfg = require('./cfg');
 const credentials = require('./credentials');
 const enabledAuthProviders = Object.keys(credentials);
 
-var conn = mysql.createPool({
-    host: cfg.db.server,
-    port: cfg.db.port,
-    user: cfg.db.username,
-    password: cfg.db.pw,
-    database: cfg.db.db
-});
-
-var promiseConn = conn.promise();
+const db = require('./models');
 
 var app = express();
 app.set('view engine', 'pug');
@@ -51,9 +41,10 @@ app.use('/', express.static(__dirname + '/public'));
 
 app.use(require('body-parser').urlencoded({ extended: false }));
 
-var sessionStore = new MySQLStore(({pool: conn}));
+var sessionStore = new (require("connect-session-sequelize")(expresssession.Store))({db: db.sequelize});
 app.use(cookieParser());
 app.use(expresssession({key: 'identificate', secret: cfg.sessSecret, resave: true, saveUninitialized: true, store: sessionStore}));
+sessionStore.sync();
 
 
 passport.serializeUser(async function(id, cb) {
@@ -61,7 +52,7 @@ passport.serializeUser(async function(id, cb) {
 });
   
 passport.deserializeUser(async function(id, cb) {
-    let user = (await promiseConn.query('SELECT * FROM users WHERE id = ?', id))[0][0];
+    let user = await db.User.findOne({where: {id: id}});
     cb(null, user);
 });
 
@@ -134,7 +125,7 @@ app.get('/api/auth', async (req, res) => {
     if (!codes.hasOwnProperty(req.query.code)) return res.send({error: 'Invalid code.'});
     let codeObject = codes[req.query.code];
     delete codes[req.query.code]; //ensure codes may only be used once
-    let user = userToSend((await promiseConn.query('SELECT * FROM users WHERE id = ?', codeObject.userID))[0][0]);
+    let user = userToSend(await db.User.findOne({where: {id: codeObject.userID}}));
    
     res.send(user);
 });
@@ -142,7 +133,10 @@ app.get('/api/auth', async (req, res) => {
 
 
 async function auth(using, auth_string) {
-    let users = (await promiseConn.query('SELECT * FROM users WHERE (`using` = ?) AND (`auth_string` = ?)', [using, auth_string]))[0];
+    let users = await db.User.findAll({where: {
+        using: using,
+        authString: auth_string
+    }});
     if (users.length > 0) { //If a user with the specified auth string exists,
         logAction(`Sign-in through ${using}`, users[0].id);
         return users[0].id; //store the ID of that user in the session.
@@ -152,9 +146,13 @@ async function auth(using, auth_string) {
             newId = String();
             for (let i = 0; i < idLength; i++)
                 newId += idCharacters.charAt(Math.floor(Math.random() * idCharacters.length));
-            idTaken = (await promiseConn.query('SELECT COUNT(1) as idTaken FROM users WHERE id = ?', newId))[0][0].idTaken;
-        } while (idTaken === 1);
-        await promiseConn.query('INSERT INTO users (`id`, `using`, `auth_string`) VALUES (?)', [[newId, using, auth_string]]);
+            idTaken = await db.User.count({where: {id: newId}});
+        } while (idTaken > 0);
+        await db.User.create({
+            id: newId,
+            using: using,
+            authString: auth_string,
+        });
         newlyCreatedUsers.push(newId);
         logAction(`Sign-up through ${using}`, newId);
         return newId;
@@ -331,23 +329,21 @@ if (credentials.hasOwnProperty('auth0')) {
 }
 
 app.get('/u/:userID/', async (req, res) => {
-    let usersFound = (await promiseConn.query('SELECT * FROM users WHERE id = ?', req.params.userID))[0];
-    if (usersFound.length == 0)
-        usersFound = [undefined];
-    res.render('profile', {user: userToSend(req.user), userFound: userToSend(usersFound[0])});
+    let user = await db.User.findOne({where: {id: req.params.userID}});
+    res.render('profile', {user: userToSend(req.user), userFound: userToSend(user)});
 });
 
 app.get('/u/:userID/json', async (req, res) => {
-    let usersFound = (await promiseConn.query('SELECT * FROM users WHERE id = ?', req.params.userID))[0];
-    if (usersFound.length == 0)
+    let user = await db.User.findOne({where: {id: req.params.userID}});
+    if (user == null)
         return res.send('User doesn\'t exist');
-    res.send(userToSend(usersFound[0]));
+    res.json(userToSend(user));
 });
 
 app.get('/avatar/:userID.png', async (req, res) => {
     //validate userID
-    let usersFound = (await promiseConn.query('SELECT * FROM users WHERE id = ?', req.params.userID))[0];
-    if (usersFound.length == 0)
+    let user = await db.User.findOne({where: {id: req.params.userID}});
+    if (user == null)
         return res.send('User doesn\'t exist');
 
     //validate image size
@@ -429,7 +425,10 @@ app.post('/edit-profile', async (req, res, next) => {
             if (!imageIsSet) return;
         }
         //update user
-        await promiseConn.query('UPDATE users SET name = ?, website = ? WHERE id = ?', [req.body.name, req.body.website, req.user.id]);
+        await db.User.update({
+            name: req.body.name,
+            website: req.body.website,
+        }, {where: {id: req.user.id}});
         if (req.session.hasOwnProperty('redirectUri') && req.session.redirectUri != null)
             res.redirect('/confirm-login');
         else res.redirect(`/u/${req.user.id}/`);
