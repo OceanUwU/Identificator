@@ -18,16 +18,103 @@ block content
     if userFound == null
         h1 User not found
     else
-        h1
-            img.border.rounded(src=userFound.avatarURL+"?size=32")
-            |  
-            =name
-        
+        div.jumbotron
+            h1
+                img.border.rounded(src=userFound.avatarURL+"?size=32")
+                |  
+                =name
+                span.lead= ` ${userFound.pronouns.subject}/${userFound.pronouns.object}`
+            hr
+            p= userFound.bio
+        p ID: #[a(href=`/u/${userFound.id}`)=userFound.id]
+        p Username: #[a(href=`/un/${userFound.username}`)=userFound.username]
+        p Tag: #[a(href=`/un/${userFound.dName.name}%23${userFound.dName.discrim}`)=userFound.dName.tag]
         a(href=userFound.website)= name+"'s website"
         br
         br
-        a.btn.btn-secondary(href="/u/"+userFound.id+"/json") JSON
-        if user != null && user.id == userFound.id
-            br
-            br
-            a.btn.btn-lg.btn-primary(href="/edit-profile") Edit Profile
+
+        div.rounded.border.border-secondary.bg-light.p-2
+            h3 Card
+            hr
+            img#cardDisplay
+            hr
+            label Orientation
+            select.form-control#cardOrientation(onchange="displayCard()")
+                option(value="l") Landscape
+                option(value="p") Portrait
+            label Subtitle
+            select.form-control#cardTitle(onchange="displayCard()")
+                option(value="u") Username
+                option(value="d") Tag
+                option(value="i") ID
+            div.custom-control.custom-checkbox
+                input.custom-control-input#cardBackground(type="checkbox" onchange="displayCard()")
+                label.custom-control-label(for="cardBackground") Background
+            div.custom-control.custom-checkbox
+                input.custom-control-input#cardBorder(type="checkbox" onchange="displayCard()")
+                label.custom-control-label(for="cardBorder") Border
+            label Force text color (use only when background is unchecked)
+            select.form-control#cardText(onchange="displayCard()")
+                option(value="none") Don't force
+                option(value="w") White
+                option(value="b") Black
+            hr
+            label Link
+            div.input-group
+                input.form-control#cardLink(type="text" readonly value="loading...")
+                div.input-group-append
+                    button.btn.btn-primary.copy-button(for="cardLink" data-toggle="tooltip" title="Copy to clipboard") Copy
+        br
+
+        div.rounded.border.border-secondary.bg-light.p-2
+            h3 Avatar
+            hr
+            img#avatarDisplay
+            hr
+            label Image size
+            input.form-control#avatarSize(style="width:100px" value=128 type="number" onchange="displayAvatar()")
+            div.custom-control.custom-checkbox
+                input.custom-control-input#avatarNT(type="checkbox" onchange="displayAvatar()")
+                label.custom-control-label(for="avatarNT") Remove transparency?
+            hr
+            label Link
+            div.input-group
+                input.form-control#avatarLink(type="text" readonly value="loading...")
+                div.input-group-append
+                    button.btn.btn-primary.copy-button(for="avatarLink" data-toggle="tooltip" title="Copy to clipboard") Copy
+        br
+
+        div.rounded.border.border-secondary.bg-light.p-2
+            h3 JSON
+            hr
+            iframe#preview
+            hr
+            div.custom-control.custom-checkbox
+                input.custom-control-input.flag-checkbox#flagEverything(type="checkbox" data-bit='-Infinity')
+                label.custom-control-label(for="flagEverything") Everything
+            each flag, bit in flagOrder
+                -
+                    if (flag == null)
+                        continue;
+                div.custom-control.custom-checkbox
+                    -
+                        let id = `flag${bit}`;
+                    input.custom-control-input.flag-checkbox(type="checkbox" id=id data-bit=bit)
+                    label.custom-control-label(for=id)= `${flag[0]} (bit ${bit})`
+            hr
+            label Base 62 flag integer
+            div.input-group
+                input.form-control#flags(type="text" readonly value="loading...")
+                div.input-group-append
+                    button.btn.btn-primary.copy-button(for="flags" data-toggle="tooltip" title="Copy to clipboard") Copy
+            label JSON link
+            div.input-group
+                input.form-control#JSONlink(type="text" readonly value="loading...")
+                div.input-group-append
+                    button.btn.btn-primary.copy-button(for="JSONlink" data-toggle="tooltip" title="Copy to clipboard") Copy
+
+block js
+    script(src="/js/base62.js")
+    script.
+        var userID = '!{userFound.id}';
+    script(src="/js/profile.js")

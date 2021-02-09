@@ -1,94 +1,81 @@
-const fs = require('fs');
 const path = require('path');
 const url = require('url');
 const querystring = require('querystring');
 const express = require('express');
-const multer = require('multer');
-const Jimp = require('jimp');
-const passport = require('passport');
-
-const DiscordStrategy = require('passport-discord').Strategy;
-const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const WordpressStrategy = require('passport-wordpress').Strategy;
-const RedditStrategy = require('passport-reddit').Strategy;
-const GithubStrategy = require('passport-github').Strategy;
-const GitlabStrategy = require('passport-gitlab2').Strategy;
-const FacebookStrategy = require('passport-facebook').Strategy;
-const SteamStrategy = require('passport-steam').Strategy;
-const YandexStrategy = require('passport-yandex').Strategy;
-const Auth0Strategy = require('passport-auth0').Strategy;
+global.passport = require('passport');
 
 const expresssession = require('express-session');
 const cookieParser = require('cookie-parser');
 //const crypto = require('crypto'); //crypto.createHmac('sha512', 'identificator').update(PASSWORD).digest('hex');
 
-const idLength = 16;
-const idCharacters = 'abcdefghijklmnopqrstuvwxyz0123456789';
 
 const codeCharacters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 const codeLifespan = 5 * (1000 * 60); //5 minutes
 const codeClearInterval = 1 * (1000 * 60); //1 minute
 
-const cfg = require('./cfg');
-const credentials = require('./credentials');
-const enabledAuthProviders = Object.keys(credentials);
+global.cfg = require('./cfg');
 
-const db = require('./models');
+global.db = require('./models');
 
-var app = express();
-app.set('view engine', 'pug');
-app.use('/', express.static(__dirname + '/public'));
+global.app = express();
+global.app.set('view engine', 'pug');
+global.app.use('/', express.static(__dirname + '/public'));
 
-app.use(require('body-parser').urlencoded({ extended: false }));
+global.app.use(require('body-parser').urlencoded({ extended: false }));
 
-var sessionStore = new (require("connect-session-sequelize")(expresssession.Store))({db: db.sequelize});
-app.use(cookieParser());
-app.use(expresssession({key: 'identificate', secret: cfg.sessSecret, resave: true, saveUninitialized: true, store: sessionStore}));
+var sessionStore = new (require("connect-session-sequelize")(expresssession.Store))({db: global.db.sequelize});
+global.app.use(cookieParser());
+global.app.use(expresssession({key: 'identificate', secret: global.cfg.sessSecret, resave: true, saveUninitialized: true, store: sessionStore}));
 sessionStore.sync();
 
 
-passport.serializeUser(async function(id, cb) {
+global.passport.serializeUser(async function(id, cb) {
     cb(null, id);
 });
   
-passport.deserializeUser(async function(id, cb) {
-    let user = await db.User.findOne({where: {id: id}});
+global.passport.deserializeUser(async function(id, cb) {
+    let user = await global.db.User.findOne({where: {id: id}});
     cb(null, user);
 });
 
-app.use(passport.initialize());
-app.use(passport.session());
+global.app.use(global.passport.initialize());
+global.app.use(global.passport.session());
+require('./strategies');
 
-app.get('/login', (req, res) => {
-    if (req.query.hasOwnProperty('redirect_uri'))
-        req.session.redirectUri = req.query.redirect_uri;
-    else
+global.app.get('/login', (req, res) => {
+    if (req.query.hasOwnProperty('redirect_uri')) {
+        try {
+            req.session.redirectUri = decodeURI(req.query.redirect_uri);
+        } catch (e) {
+            return res.send(`${e.name}: ${e.message}`);
+        }
+    } else
         delete req.session.redirectUri;
     if (req.user == undefined)
-        res.render('login', {enabledAuthProviders: enabledAuthProviders});
+        res.render('login', {enabledAuthProviders: global.enabledAuthProviders});
     else
         res.redirect('/confirm-login');
 });
 
-app.get('/confirm-login', (req, res) => {
+global.app.get('/confirm-login', (req, res) => {
     if (req.user != undefined) {
-        if (newlyCreatedUsers.includes(req.user.id)) {
-            newlyCreatedUsers.splice(newlyCreatedUsers.indexOf(req.user.id), 1);
+        if (global.newlyCreatedUsers.includes(req.user.id)) {
+            global.newlyCreatedUsers.splice(global.newlyCreatedUsers.indexOf(req.user.id), 1);
             res.redirect('/edit-profile');
         } else if (req.session.redirectUri == undefined)
             res.redirect('/');
         else 
-            res.render('confirm-login', {user: userToSend(req.user), host: url.parse(req.session.redirectUri).host});
+            res.render('confirm-login', {user: global.userToSend(req.user), host: url.parse(req.session.redirectUri).host});
     } else 
         res.redirect('/login');
 });
 
-app.get('/switch', (req, res) => {
+global.app.get('/switch', (req, res) => {
     req.logout();
     res.redirect(`/login?redirect_uri=${req.session.redirectUri}`);
 });
 
-app.get('/login/callback', (req, res) => {
+global.app.get('/login/callback', (req, res) => {
     if (req.session.hasOwnProperty('redirectUri') && req.session.redirectUri != null) {
         let redirectUri = url.parse(req.session.redirectUri);
         delete req.session.redirectUri;
@@ -109,343 +96,99 @@ app.get('/login/callback', (req, res) => {
         query = querystring.encode(query);
         if (redirectUri.protocol == null)
             redirectUri.protocol = "http:";
-        logAction(`Continued to ${redirectUri.host}`, req.user.id);
+        global.logAction(`Continued to ${redirectUri.host}`, req.user.id);
         res.redirect(`${redirectUri.protocol}//${redirectUri.host}${redirectUri.pathname}?${query}`);
     } else
         res.redirect('/');
 });
 
-app.get('/logout', (req, res) => {
+global.app.get('/logout', (req, res) => {
     req.logout();
     res.redirect('/');
 });
 
-app.get('/api/auth', async (req, res) => {
-    if (!req.query.hasOwnProperty('code')) return res.send({error: 'No code supplied.'});
-    if (!codes.hasOwnProperty(req.query.code)) return res.send({error: 'Invalid code.'});
+global.app.get('/api/auth', async (req, res) => {
+    if (!req.query.hasOwnProperty('code')) return res.json({error: 'No code supplied.'});
+    if (!codes.hasOwnProperty(req.query.code)) return res.json({error: 'Invalid code.'});
     let codeObject = codes[req.query.code];
     delete codes[req.query.code]; //ensure codes may only be used once
-    let user = userToSend(await db.User.findOne({where: {id: codeObject.userID}}));
+    let user = global.userToSend(await global.db.User.findOne({where: {id: codeObject.userID}}));
    
-    res.send(user);
+    res.json({id: user.id});
+});
+
+
+global.app.get('/api/available', async (req, res) => {
+    if (!req.query.hasOwnProperty('n')) return res.send({error: 'the \'n\' query variable must be supplied'});
+    if (req.query.hasOwnProperty('me') && req.user != undefined && (req.query.n.toLowerCase() == req.user.username.toLowerCase() || req.query.n.toLowerCase() == `${req.user.dName}#${req.user.discrim}`.toLowerCase())) return res.json(true);
+    res.json(await global.findUserByUsername(req.query.n) == null);
 });
 
 
 
-async function auth(using, auth_string) {
-    let users = await db.User.findAll({where: {
-        using: using,
-        authString: auth_string
-    }});
-    if (users.length > 0) { //If a user with the specified auth string exists,
-        logAction(`Sign-in through ${using}`, users[0].id);
-        return users[0].id; //store the ID of that user in the session.
-    } else { //If a user with the specified auth string doesn't already exist, create a new one.
-        let newId, idTaken;
-        do {
-            newId = String();
-            for (let i = 0; i < idLength; i++)
-                newId += idCharacters.charAt(Math.floor(Math.random() * idCharacters.length));
-            idTaken = await db.User.count({where: {id: newId}});
-        } while (idTaken > 0);
-        await db.User.create({
-            id: newId,
-            using: using,
-            authString: auth_string,
-        });
-        newlyCreatedUsers.push(newId);
-        logAction(`Sign-up through ${using}`, newId);
-        return newId;
-    }
-}
 
-if (credentials.hasOwnProperty('discord')) {
-    app.get('/auth/discord', passport.authenticate('discord', {scope: ['identify']}));
-    app.get('/auth/discord/callback', passport.authenticate('discord', {failureRedirect: '/login-error'}), (req, res) => res.redirect('/confirm-login'));
+global.app.get('/', (req, res) => res.render('index', {user: global.userToSend(req.user)}));
+global.app.get('/examples', (req, res) => res.render('examples', {user: global.userToSend(req.user)}));
 
-    passport.use(new DiscordStrategy(
-        {
-            clientID: credentials.discord.id,
-            clientSecret: credentials.discord.secret,
-            callbackURL: cfg.url+'/auth/discord/callback'
-        },
-        async (accessToken, refreshToken, profile, cb) => {
-            cb(null, await auth('discord', profile.id));
-        }
-    ));
-}
+require('./routes');
 
-if (credentials.hasOwnProperty('google')) {
-    app.get('/auth/google', passport.authenticate('google', {scope: ['profile']}));
-    app.get('/auth/google/callback', passport.authenticate('google', {failureRedirect: '/login-error'}), (req, res) => res.redirect('/confirm-login'));
-
-    passport.use(new GoogleStrategy(
-        {
-            clientID: credentials.google.id,
-            clientSecret: credentials.google.secret,
-            callbackURL: cfg.url+'/auth/google/callback'
-        },
-        async (accessToken, refreshToken, profile, cb) => {
-            cb(null, await auth('google', profile.id));
-        }
-    ));
-}
-
-if (credentials.hasOwnProperty('wordpress')) {
-    app.get('/auth/wordpress', passport.authenticate('wordpress', {scope: ['auth']}));
-    app.get('/auth/wordpress/callback', passport.authenticate('wordpress', {failureRedirect: '/login-error'}), (req, res) => res.redirect('/confirm-login'));
-
-    passport.use(new WordpressStrategy(
-        {
-            clientID: credentials.wordpress.id,
-            clientSecret: credentials.wordpress.secret,
-            callbackURL: cfg.url+'/auth/wordpress/callback'
-        },
-        async (accessToken, refreshToken, profile, cb) => {
-            cb(null, await auth('wordpress', profile.id));
-        }
-    ));
-}
-
-if (credentials.hasOwnProperty('reddit')) {
-    app.get('/auth/reddit', passport.authenticate('reddit', {scope: ['identity']}));
-    app.get('/auth/reddit/callback', passport.authenticate('reddit', {failureRedirect: '/login-error'}), (req, res) => res.redirect('/confirm-login'));
-
-    passport.use(new RedditStrategy(
-        {
-            clientID: credentials.reddit.id,
-            clientSecret: credentials.reddit.secret,
-            callbackURL: cfg.url+'/auth/reddit/callback',
-            state: "identitytime",
-        },
-        async (accessToken, refreshToken, profile, cb) => {
-            cb(null, await auth('reddit', profile.id));
-        }
-    ));
-}
-
-if (credentials.hasOwnProperty('github')) {
-    app.get('/auth/github', passport.authenticate('github', {scope: ['read:user']}));
-    app.get('/auth/github/callback', passport.authenticate('github', {failureRedirect: '/login-error'}), (req, res) => res.redirect('/confirm-login'));
-
-    passport.use(new GithubStrategy(
-        {
-            clientID: credentials.github.id,
-            clientSecret: credentials.github.secret,
-            callbackURL: cfg.url+'/auth/github/callback'
-        },
-        async (accessToken, refreshToken, profile, cb) => {
-            cb(null, await auth('github', profile.id));
-        }
-    ));
-}
-
-if (credentials.hasOwnProperty('gitlab')) {
-    app.get('/auth/gitlab', passport.authenticate('gitlab', {scope: ['read_user']}));
-    app.get('/auth/gitlab/callback', passport.authenticate('gitlab', {failureRedirect: '/login-error'}), (req, res) => res.redirect('/confirm-login'));
-
-    passport.use(new GitlabStrategy(
-        {
-            clientID: credentials.gitlab.id,
-            clientSecret: credentials.gitlab.secret,
-            callbackURL: cfg.url+'/auth/gitlab/callback'
-        },
-        async (accessToken, refreshToken, profile, cb) => {
-            cb(null, await auth('gitlab', profile.id));
-        }
-    ));
-}
-
-if (credentials.hasOwnProperty('facebook')) {
-    app.get('/auth/facebook', passport.authenticate('facebook', {scope: []}));
-    app.get('/auth/facebook/callback', passport.authenticate('facebook', {failureRedirect: '/login-error'}), (req, res) => res.redirect('/confirm-login'));
-
-    passport.use(new FacebookStrategy(
-        {
-            clientID: credentials.facebook.id,
-            clientSecret: credentials.facebook.secret,
-            callbackURL: cfg.url+'/auth/facebook/callback'
-        },
-        async (accessToken, refreshToken, profile, cb) => {
-            cb(null, await auth('facebook', profile.id));
-        }
-    ));
-}
-
-if (credentials.hasOwnProperty('steam')) {
-    app.get('/auth/steam', passport.authenticate('steam', {scope: []}));
-    app.get('/auth/steam/callback', passport.authenticate('steam', {failureRedirect: '/login-error'}), (req, res) => res.redirect('/confirm-login'));
-
-    passport.use(new SteamStrategy(
-        {
-            apiKey: credentials.steam,
-            returnURL: cfg.url+'/auth/steam/callback'
-        },
-        async (identifier, profile, cb) => {
-            cb(null, await auth('steam', profile.id));
-        }
-    ));
-}
-
-if (credentials.hasOwnProperty('yandex')) {
-    app.get('/auth/yandex', passport.authenticate('yandex', {scope: []}));
-    app.get('/auth/yandex/callback', passport.authenticate('yandex', {failureRedirect: '/login-error'}), (req, res) => res.redirect('/confirm-login'));
-
-    passport.use(new YandexStrategy(
-        {
-            clientID: credentials.yandex.id,
-            clientSecret: credentials.yandex.secret,
-            callbackURL: cfg.url+'/auth/yandex/callback'
-        },
-        async (accessToken, refreshToken, profile, cb) => {
-            cb(null, await auth('yandex', profile.id));
-        }
-    ));
-}
-
-if (credentials.hasOwnProperty('auth0')) {
-    app.get('/auth/auth0/', (req, res) => res.redirect(`https://${credentials.auth0.domain}/v2/logout?returnTo=${encodeURIComponent(cfg.url+"/auth/auth0/real")}&client_id=${credentials.auth0.id}`));
-    app.get('/auth/auth0/real', passport.authenticate('auth0', {scope: 'openid'}));
-    app.get('/auth/auth0/callback', passport.authenticate('auth0', {failureRedirect: '/login-error'}), (req, res) => res.redirect('/confirm-login'));
-
-    if (credentials.auth0.hasOwnProperty("connections"))
-        for (i of credentials.auth0.connections) {
-            app.get('/auth/'+i, (req, res) => res.redirect('/auth/auth0'));
-            enabledAuthProviders.push(i);
-        }
-
-    passport.use(new Auth0Strategy(
-        {
-            domain: credentials.auth0.domain,
-            clientID: credentials.auth0.id,
-            clientSecret: credentials.auth0.secret,
-            callbackURL: cfg.url+'/auth/auth0/callback',
-            state: true
-        },
-        async (accessToken, refreshToken, extraParams, profile, cb) => {
-            cb(null, await auth('auth0', profile.id));
-        }
-    ));
-}
-
-app.get('/u/:userID/', async (req, res) => {
-    let user = await db.User.findOne({where: {id: req.params.userID}});
-    res.render('profile', {user: userToSend(req.user), userFound: userToSend(user)});
-});
-
-app.get('/u/:userID/json', async (req, res) => {
-    let user = await db.User.findOne({where: {id: req.params.userID}});
-    if (user == null)
-        return res.send('User doesn\'t exist');
-    res.json(userToSend(user));
-});
-
-app.get('/avatar/:userID.png', async (req, res) => {
-    //validate userID
-    let user = await db.User.findOne({where: {id: req.params.userID}});
-    if (user == null)
-        return res.send('User doesn\'t exist');
-
-    //validate image size
-    let size = (req.query.hasOwnProperty("size") ? Number(req.query.size) : 256);
-    if (isNaN(size))
-        return res.send("avatar size must be a number");
-    else if (size > 256)
-        return res.send("avatar size must be at most 256");
-    else if (size <= 1)
-        return res.send("avatar size must be at least 1");
-
-    //find and send image
-    let avatar;
-    let path = "store/avatars/"+req.params.userID+".png";
-    if (!fs.existsSync(path))
-        path = "public/i/default-avatar.png";
-    await Jimp.read(path)
-        .then(async image => {
-            if (req.query.hasOwnProperty("nt"))
-                image.opaque();
-            avatar = await image
-                .resize(size, size)
-                .getBufferAsync(Jimp.MIME_PNG);
-        });
-    
-    res.contentType("png");
-    res.end(avatar, "binary")
-});
-
-app.get('/', (req, res) => res.render('index', {user: userToSend(req.user)}));
-app.get('/examples', (req, res) => res.render('examples', {user: userToSend(req.user)}));
-
-app.get('/edit-profile', (req, res) => res.render('edit-profile', {user: userToSend(req.user)}));
-
-var upload = multer({
-    dest: "temp",
-    limits: {
-        fileSize: 1 * 1024 * 1024,
-    }
-}).single("avatar");
-
-app.post('/edit-profile', async (req, res, next) => {
-    upload(req, res, async err => {
-        if (err instanceof multer.MulterError)
-            return res.send("error uploading avatar")
-
-        if (req.user == undefined) return;
-
-        //validate name
-        if (typeof req.body.name != 'string') return;
-        if (req.body.name.length > 16) return;
-        if (req.body.name.length == 0)
-            req.body.name = null;
-
-        if (req.body.website == undefined) return
-        if (typeof req.body.website != 'string') return;
-        if (req.body.website.length > 200) return;
-        if (req.body.website.length == 0)
-            req.body.website = null;
-        if (req.body.website == `${cfg.url}/u/${req.user.id}`)
-            req.body.website = null;
-        if (req.body.website != null && !(req.body.website.startsWith("http://") || req.body.website.startsWith("https://") || req.body.website.startsWith("://")))
-            req.body.website = "http://" + req.body.website;
-
-        //validate and save avatar image
-        if (req.file != undefined) {
-            let imageIsSet = false;
-            await Jimp.read(req.file.path)
-                .then(image => {
-                    image
-                        .resize(256, 256)
-                        .write("store/avatars/"+req.user.id+".png");
-                    imageIsSet = true;
-                })
-                .catch(err => {
-                    return res.send("error reading avatar file. is it the wrong format? is it corrupted?");
-                });
-            fs.unlinkSync(req.file.path); //delete temp file
-            if (!imageIsSet) return;
-        }
-        //update user
-        await db.User.update({
-            name: req.body.name,
-            website: req.body.website,
-        }, {where: {id: req.user.id}});
-        if (req.session.hasOwnProperty('redirectUri') && req.session.redirectUri != null)
-            res.redirect('/confirm-login');
-        else res.redirect(`/u/${req.user.id}/`);
-    });
-});
-
-function userToSend(user) {
-    if (user == undefined) return undefined;
+global.parsePronouns = pronouns => {
+    let p = pronouns.split('`');
     return {
-        id: user.id,
-        name: user.name,
-        website: (user.website == null ? `${cfg.url}/u/${user.id}` : user.website),
-        avatarURL: cfg.url + `/avatar/${user.id}.png`,
+        subject: p[0],
+        object: p[1],
+        possessive: p[2],
+        possessiveIndependent: p[3],
+        reflexive: p[4],
+        type: Number(p[5]),
     };
+};
+global.parseColors = colors => {
+    let c = colors.split(',').map(color => `#${color}`);
+    return {
+        '1': c[0],
+        '2': c[1],
+        '3': c[2],
+        '4': c[3],
+        'text': c[4],
+    };
+};
+global.flagOrder = [
+    ['id', u=>u.id],
+    ['username', u=>u.username],
+    ['dName', u=>({
+        name: u.dName,
+        discrim: u.discrim,
+        tag: `${u.dName}#${u.discrim}`
+    })],
+    null,
+    ['name', u=>u.name],
+    ['bio', u=>u.bio],
+    ['email', u=>u.email],
+    ['website', u=>u.website],
+    ['profileURL', u=>`${global.cfg.url}/u/${u.id}`],
+    null,
+    null,
+    null,
+    ['pronouns', u=>global.parsePronouns(u.pronouns)],
+    null,
+    ['colors', u=>global.parseColors(u.colors)],
+    null,
+    ['avatarURL', u=>(global.cfg.url + `/avatar/${u.id}.png`)],
+];
+global.userToSend = (user, flags=2**global.flagOrder.length-1) => {
+    if (user == undefined) return undefined;
+    let output = {};
+    for (let i in flagOrder) {
+        if (flagOrder[i] == null) continue;
+        if ((flags >> i) % 2)
+            output[flagOrder[i][0]] = flagOrder[i][1](user);
+    }
+
+    return output;
 }
 
-function logAction(event, userId) {
+global.logAction = (event, userId) => {
     console.log(`${event}: ${userId} at ${new Date().toUTCString()}`);
 }
 
@@ -462,8 +205,8 @@ setInterval(() => {
     for (i in codes) if(((Date.now() - codes[i].created) - codeLifespan) > 0) delete codes[i]; //delete all expired codes
 }, codeClearInterval);
 
-var newlyCreatedUsers = Array();
+global.newlyCreatedUsers = Array();
 
-const server = app.listen(cfg.port, () => {
+const server = global.app.listen(global.cfg.port, () => {
     console.log('Web server started.');
 });

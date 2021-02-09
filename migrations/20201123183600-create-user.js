@@ -13,10 +13,31 @@ module.exports = {
       authString: {
         type: Sequelize.STRING
       },
+      username: {
+        type: Sequelize.STRING
+      },
+      dName: {
+        type: Sequelize.STRING
+      },
+      discrim: {
+        type: Sequelize.STRING
+      },
       name: {
         type: Sequelize.STRING
       },
+      bio: {
+        type: Sequelize.STRING
+      },
       website: {
+        type: Sequelize.STRING
+      },
+      pronouns: {
+        type: Sequelize.STRING
+      },
+      colors: {
+        type: Sequelize.STRING
+      },
+      email: {
         type: Sequelize.STRING
       },
       createdAt: {

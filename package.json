@@ -18,7 +18,9 @@
   },
   "homepage": "https://github.com/975miles/Identificator#readme",
   "dependencies": {
+    "base62": "^2.0.1",
     "body-parser": "^1.19.0",
+    "canvas": "^2.6.1",
     "connect-session-sequelize": "^7.0.4",
     "cookie-parser": "^1.4.5",
     "crypto": "^1.0.1",

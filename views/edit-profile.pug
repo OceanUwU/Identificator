@@ -4,25 +4,177 @@ block info
     title Editing profile - Identificator
     meta(name="description" content="A page to edit your Identificator profile.")
 
+block head
+    link(rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-colorpicker/3.2.0/css/bootstrap-colorpicker.min.css")
+    style.
+        .inline-input {
+            width: 100px !important;
+        }
+
+
 block content
     if (user == undefined)
         h1 You must be logged in to Identificator to use this.
     else
         h1 Edit your Identificator profile
         form(action="" method="post" enctype="multipart/form-data")
+            hr
+            h3 Identification methods
+            p These are ways apps and users will use to identify you.
+            hr
+            label ID:
+            input.form-control(type="text" value=user.id disabled)
+            p A unique, unchanging string which apps use to identify you. You can't edit this.
+            hr
+            label Unique username:
+            .input-group
+                input.form-control#username(type="text" name="username" value=user.username maxlength=limits.username availableChars=availableChars.usernames)
+                .input-group-append
+                    span.input-group-text.count-message(for="username")
+            p this is
+            hr
+            label Tag (username with discriminator):
+            div.input-group
+                .input-group-prepend
+                    span.input-group-text.count-message(for="usernameD")
+                input.form-control#usernameD(type="text" name="usernameD" value=user.dName.name maxlength=limits.dName availableChars=availableChars.usernames)
+                .input-group-prepend.input-group-append
+                    .input-group-text #
+                input.form-control#discriminator(type="text" name="discriminator" onkeyup="this.value=this.value.toUpperCase()" value=user.dName.discrim maxlength=limits.discrim availableChars=availableChars.discrim)
+                .input-group-append
+                    span.input-group-text.count-message(for="discriminator")
+
+            p Usually apps will display only the part before the #, and use the entire thing for people to find you.
+            hr
+            h3 Personal info
+            p Information about you. This doesn't have to be accurate at all.
+            hr
             label Profile name:
-            input.form-control#name(type="text" name="name" value=user.name maxlength=16)
+            input.form-control#name(type="text" name="name" value=user.name maxlength=limits.name)
+            p Apps will display this as your name. This isn't unique, multiple people can share a name. You can change this as often and as many times as you want. This shuold just be your first name, not your full name.
+            hr
+            label Bio:
+            .input-group
+                textarea.form-control#bio(rows="3" name="bio" maxlength=limits.bio)= user.bio
+                .input-group-append
+                    span.input-group-text.count-message(for="bio")
+            p Some information about you. You can include the pronouns you'd like other users to use for you here. You can include contact information (e.g. social media) here if you're going to be using apps where users might need/want that.
+
+            hr
             label Website:
-            input.form-control#name(type="text" name="website" value=user.website maxlength=200)
+            .input-group
+                input.form-control#website(type="text" name="website" value=user.website maxlength=limits.website)
+                .input-group-append
+                    span.input-group-text.count-message(for="website")
+            p this is
+            hr
+            label Pronouns:
             br
+            label(for="pronounType") Pronoun type:
+            select.form-control#pronounType(name="typePronoun" onchange="UPS()")
+                each example, index in ['[pronoun] is doing it / [pronoun] does it', '[pronoun] are doing it / [pronoun] do it']
+                    option(value=index selected=index==user.pronouns.type)= `${index} (e.g. ${example})`
+            mixin pronounInput(name, title, examples)
+                -
+                    name += 'Pronoun';
+                input.form-control.inline-input.mx-sm-1(id=name type="text" name=name onkeyup="UPS(this)" data-toggle="tooltip" data-placement="top" data-html="true" title=`${title}<br>Examples: ${examples.map(example => example.toLowerCase()).join(', ')}` value=user.pronouns[name.slice(0, -'Pronoun'.length)] maxlength=limits.pronoun)
+            br
+            p.text-muted (Fill in the blanks in this sentence so that it would apply to you)
+            div.form-inline
+                span!= 'This is&nbsp;'
+                +pronounInput('possessive', 'Possessive pronoun', ['Her', 'His', 'Their'])
+                span!= '&nbsp;post. Mhm, it\'s definitely&nbsp;'
+                +pronounInput('possessiveIndependent', 'Independent possessive pronoun', ['Hers', 'His', 'Theirs'])
+                span!= '. Yeah,&nbsp;'
+                +pronounInput('subject', 'Subject pronoun', ['She', 'He', 'They'])
+                span!= '&nbsp;posted it yesterday and&nbsp;'
+                u: label.subjectPronoun(for="subjectPronoun")
+                span= '\''
+                u: label.pronounTypeDependent(d-0="s" d-1="re" for="pronounType")
+                span!= '&nbsp;really proud of it, since&nbsp;'
+                u: label.subjectPronoun(for="subjectPronoun")
+                span!= '&nbsp;made it all by '
+                +pronounInput('reflexive', 'Reflexive pronoun', ['himself', 'herself', 'themself', 'themselves'])
+                span!= '.&nbsp'
+                u: label.subjectPronounTitleCase(for="subjectPronoun")
+                span!= '&nbsp;'
+                u: label.pronounTypeDependent(d-0="has" d-1="have" for="pronounType")
+                span!= '&nbsp;said that&nbsp;'
+                u: label.subjectPronoun(for="subjectPronoun")
+                span!= '&nbsp;'
+                u: label.pronounTypeDependent(d-0="is" d-1="are" for="pronounType")
+                span!= '&nbsp;really happy with how many likes it got.&nbsp;'
+                u: label.subjectPronounTitleCase(for="subjectPronoun")
+                span= '\''
+                u: label.pronounTypeDependent(d-0="s" d-1="ve" for="pronounType")
+                span!= '&nbsp;got other stuff to do, though, so don\'t expect anything else like this from&nbsp;'
+                +pronounInput('object', 'Object pronoun', ['her', 'him', 'them'])
+                span!= '&nbsp;anytime soon.'
+            br
+            p Apps can use these to refer to you.
+            hr
+            h3 Style options
+            p Along with apps being able to use these directly, these will be used for a profile card, which is an image generated by Identificator that apps can display to show information on your profile to others.
+            hr
             label(style="margin-right:1em") Avatar:
-            input.form-control-file.border.rounded(type="file" name="avatar")
-            p The image you upload will be resized to a 256*256 image. The file must not exceed 1MB. Supported image types: bmp, gif, jpg, png, tiff. Animated images are not allowed.
+            input.form-control-file.border.rounded#avatar(type="file" name="avatar" accept="image/*")
+            p The image you upload will be resized to a 256*256 image. The file must not exceed #{limits.avatar[1]}. Supported image types: bmp, gif, jpg, png, tiff. Animated images are not allowed. Transparency is allowed, but some apps may remove it.
+            hr
+            label(style="margin-right:1em")#designColor1 Design colors (in order from highest to lowest priority):
+            label.text-muted Click on an input to open a color picker.
+            each i in [1, 2, 3, 4]
+                .input-group.mb-3
+                    .input-group-prepend: span.input-group-text= i
+                    input.form-control(id=`cp${i}` type="text" name=`color${i}` value=user.colors[i] onchange="UDE()")
+            label(style="margin-right:1em")#textColor1 Text color (when on top of design colors):
+            input.form-control#cptext(type="text" name="colorText" value=user.colors.text onchange="UDE()")
+            hr
+            label Example design preview:
             br
+            svg#designExample.rounded.border.border-dark(width=500 height=330)
+                <pattern id="pattern-chevron" x="0" y="0" patternUnits="userSpaceOnUse" width="100" height="110" viewBox="0 0 10 11"> 
+                    <g id="chevron">
+                        <text class="chevrontext" x="-0.75" y="9.25" fill="#333333" style="font-size: 3px">1</text>
+                        <text class="chevrontext" x="9.25" y="9.25" fill="#333333" style="font-size: 3px">1</text>
+                        <path class="chevron2" d="M5 8l5 3h-10z"></path>
+                        <path class="chevron2" d="M5 3l5 -3h-10z"></path>
+                        <text class="chevrontext" x="4.5" y="1" fill="#333333" style="font-size: 3px">2</text>
+                        <text class="chevrontext" x="4.5" y="12" fill="#333333" style="font-size: 3px">2</text>
+                        <path class="chevron3" d="M0 0l5 3v5l-5 -3z"></path>
+                        <text class="chevrontext" x="2" y="5" fill="#333333" style="font-size: 3px">3</text>
+                        <path class="chevron4" d="M10 0l-5 3v5l5 -3"></path>
+                        <text class="chevrontext" x="7" y="5" fill="#333333" style="font-size: 3px">4</text>
+                    </g>
+                    <use x="0" y="0" xlink:href="#chevron"></use>
+                </pattern>
+                <rect x="0" y="0" width="100%" height="100%" fill="url(#pattern-chevron)"></rect>
+                //<text class="chevrontext" x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" style="font-size:140px;">Sample</text>
+            hr
+            h3 Contact information
+            hr
+            label E-mail address:
+            div.input-group
+                input.form-control(type="text" name="email1" maxlength=limits.email value=user.email.slice(0, user.email.indexOf('@')))
+                .input-group-prepend.input-group-append
+                    .input-group-text @
+                input.form-control(type="text" name="email2" maxlength=limits.email value=user.email.slice(user.email.indexOf('@')+1, user.email.indexOf('.')))
+                .input-group-prepend.input-group-append
+                    .input-group-text .
+                input.form-control(type="text" name="email3" maxlength=limits.email value=user.email.slice(user.email.indexOf('.')+1))
+            p This e-mail address is for apps. Apps can send notifications, news, etc. to this e-mail address. Since this is entirely public, you might want to consider using a fake address.
+            hr
+            hr
+            hr
             p 
-                | By clicking submit, you acknowledge that ALL the info you provide here will be available to ANY person or app immediately.
+                | By clicking submit, you acknowledge that ALL the info you provide here will be available to ANY person or app (even ones you haven't logged in to) immediately.
                 br
-                | Don't include any sensitive info. Every field here is optional.
+                | Don't include any sensitive info. None of these fields are optional (to make it as easy as possible for app developers), but you don't have to provide truthful information for any of them.
                 br
                 | Due to caching, your info may take a while to update.
             button.btn.btn-lg.btn-primary(type="submit") Submit
+
+block js
+    script(src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-colorpicker/3.2.0/js/bootstrap-colorpicker.min.js")
+    script.
+        var limits = !{JSON.stringify(limits)};
+    script(src="/js/edit-profile.js")
