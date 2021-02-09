@@ -72,7 +72,7 @@ block content
             img#avatarDisplay
             hr
             label Image size
-            input.form-control#avatarSize(style="width:100px" value=128 type="number" onchange="displayAvatar()")
+            input.form-control#avatarSize(style="width:100px" value=128 type="number" min=1 max=256 onchange="displayAvatar()")
             div.custom-control.custom-checkbox
                 input.custom-control-input#avatarNT(type="checkbox" onchange="displayAvatar()")
                 label.custom-control-label(for="avatarNT") Remove transparency?

@@ -20,7 +20,7 @@ global.app.get('/avatar/:userID.png', async (req, res) => {
         return res.send("avatar size must be a number");
     else if (size > 256)
         return res.send("avatar size must be at most 256");
-    else if (size <= 1)
+    else if (size < 1)
         return res.send("avatar size must be at least 1");
 
     //find and send image
