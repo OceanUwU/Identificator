@@ -3,7 +3,7 @@
 ## Setup
 1. `npm install`
 2. `npx sequelize-cli db:migrate`
-3. create`global.cfg.json`:
+3. create`cfg.json`:
     Set `url` as the URL of the website your identificator server will be accessed from.
     ```json
     {
