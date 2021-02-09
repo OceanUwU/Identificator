@@ -48,10 +48,10 @@ block content
                 option(value="d") Tag
                 option(value="i") ID
             div.custom-control.custom-checkbox
-                input.custom-control-input#cardBackground(type="checkbox" onchange="displayCard()")
+                input.custom-control-input#cardBackground(type="checkbox" onchange="displayCard()" checked)
                 label.custom-control-label(for="cardBackground") Background
             div.custom-control.custom-checkbox
-                input.custom-control-input#cardBorder(type="checkbox" onchange="displayCard()")
+                input.custom-control-input#cardBorder(type="checkbox" onchange="displayCard()" checked)
                 label.custom-control-label(for="cardBorder") Border
             label Force text color (use only when background is unchecked)
             select.form-control#cardText(onchange="displayCard()")
