@@ -23,7 +23,7 @@ block content
                 img.border.rounded(src=userFound.avatarURL+"?size=32")
                 |  
                 =name
-                span.lead= ` ${userFound.pronouns.subject}/${userFound.pronouns.object}`
+                //span.lead= ` ${userFound.pronouns.subject}/${userFound.pronouns.object}`
             hr
             p= userFound.bio
         p ID: #[a(href=`/u/${userFound.id}`)=userFound.id]
