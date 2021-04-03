@@ -19,7 +19,7 @@ global.findUserByUsername = str => {
 };
 
 const renderProfile = (req, res) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Origin', '*');
     res.render('profile', {user: global.userToSend(req.user), userFound: global.userToSend(res.locals.userFound), flagOrder: global.flagOrder});
 };
 
