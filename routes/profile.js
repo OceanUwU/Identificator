@@ -1,5 +1,6 @@
 const base62 = require('base62');
 const e = require('express');
+const cors = require('cors');
 const { render } = require('pug');
 
 global.findUserByUsername = str => {
@@ -21,12 +22,12 @@ const renderProfile = (req, res) => {
     res.render('profile', {user: global.userToSend(req.user), userFound: global.userToSend(res.locals.userFound), flagOrder: global.flagOrder});
 };
 
-global.app.get('/u/:userID/', async (req, res, next) => {
+global.app.get('/u/:userID/', cors(), async (req, res, next) => {
     res.locals.userFound = await global.db.User.findOne({where: {id: req.params.userID}});
     next();
 }, renderProfile);
 
-global.app.get('/un/:toFind/', async (req, res, next) => {
+global.app.get('/un/:toFind/', cors(), async (req, res, next) => {
     res.locals.userFound = await global.findUserByUsername(req.params.toFind);
     next();
 }, renderProfile);
