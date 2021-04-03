@@ -22,12 +22,17 @@ const renderProfile = (req, res) => {
     res.render('profile', {user: global.userToSend(req.user), userFound: global.userToSend(res.locals.userFound), flagOrder: global.flagOrder});
 };
 
-global.app.get('/u/:userID/', cors(), async (req, res, next) => {
+var corsOptions = {
+    origin: global.cfg.url,
+    optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+}
+
+global.app.get('/u/:userID/', cors(corsOptions), async (req, res, next) => {
     res.locals.userFound = await global.db.User.findOne({where: {id: req.params.userID}});
     next();
 }, renderProfile);
 
-global.app.get('/un/:toFind/', cors(), async (req, res, next) => {
+global.app.get('/un/:toFind/', cors(corsOptions), async (req, res, next) => {
     res.locals.userFound = await global.findUserByUsername(req.params.toFind);
     next();
 }, renderProfile);
