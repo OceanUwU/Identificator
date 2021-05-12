@@ -18,6 +18,7 @@
     If you're just setting up Identificator for development or testing and you'll need lots of accounts, I recommend Auth0, cause you can make accounts really fast on it
     ```json
     {
+        "password": "set this value to literally anything if you want to enable local passwords",
         "discord": {
             "id": "CLIENT_ID",
             "secret": "CLIENT_SECRET"
@@ -55,7 +56,8 @@
         "yandex": {
             "id": "CLIENT_ID",
             "secret": "CLIENT_SECRET"
-        }
+        },
+        "identificator": "http://SECONDARY-IDENTIFICATOR-SERVER-URL.com"
     }
     ```
 5. `npm start`
