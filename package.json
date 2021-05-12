@@ -36,12 +36,14 @@
     "passport-github": "^1.1.0",
     "passport-gitlab2": "^5.0.0",
     "passport-google-oauth20": "^2.0.0",
+    "passport-identificator": "^1.0.2",
+    "passport-local": "^1.0.0",
     "passport-reddit": "^0.2.4",
     "passport-steam": "^1.0.14",
     "passport-wordpress": "0.0.4",
     "passport-yandex": "0.0.5",
     "pug": "^2.0.4",
-    "sequelize": "^6.3.5",
-    "sqlite3": "^5.0.0"
+    "sequelize": "^6.6.2",
+    "sqlite3": "^5.0.2"
   }
 }

@@ -6,7 +6,7 @@ global.passport = require('passport');
 
 const expresssession = require('express-session');
 const cookieParser = require('cookie-parser');
-//const crypto = require('crypto'); //crypto.createHmac('sha512', 'identificator').update(PASSWORD).digest('hex');
+//const crypto = require('crypto'); //crypto.createHmac('sha256', 'identificator').update(PASSWORD).digest('hex');
 
 
 const codeCharacters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -52,7 +52,7 @@ global.app.get('/login', (req, res) => {
     } else
         delete req.session.redirectUri;
     if (req.user == undefined)
-        res.render('login', {enabledAuthProviders: global.enabledAuthProviders});
+        res.render('login', {enabledAuthProviders: global.enabledAuthProviders, user: global.userToSend(req.user)});
     else
         res.redirect('/confirm-login');
 });
