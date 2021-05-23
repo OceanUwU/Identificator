@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const LocalStrategy = require('passport-local').Strategy;
 
 const { auth, generateID } = require('./');
+const IDValidityLength = 1000 * 60 * 60 * 24; //1 day
 
 const passHmac = (id, password) => crypto.createHmac('sha256', id).update(password).digest('base64');
 
@@ -10,6 +11,8 @@ module.exports = (auth, credentials) => {
         //if (req.user != undefined) return res.send("Log out first."); //if not logged in
 
         let newID = await generateID();
+        await db.AvailableLoginID.create({availableID: newID});
+
         res.render('login-password', {user: global.userToSend(req.user), newID});
     });
     global.app.post('/auth/password/callback', global.passport.authenticate('local', {failureRedirect: '/false'}), (req, res) => res.json(true));
@@ -27,7 +30,12 @@ module.exports = (auth, credentials) => {
                 return cb(null, false);
             
             if (req.body.method == 1) { //sign up
-                let created = await auth('password', username);
+                await db.AvailableLoginID.destroy({where: {createdAt: {[db.Sequelize.Op.lt]: new Date(Date.now() - IDValidityLength)}}});
+                let IDFound = await db.AvailableLoginID.findOne({where: {availableID: username}});
+                if (IDFound == null)
+                    return cb(null, false);
+                await db.AvailableLoginID.destroy({where: {id: IDFound.id}});
+                let created = await auth('password', IDFound.availableID);
                 if (created != false) {
                     await db.Login.create({
                         user: username,

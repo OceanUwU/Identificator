@@ -25,7 +25,7 @@ function submit() {
         if (success)
             window.location.replace('/confirm-login');
         else
-            $('#error').html('Username or password is incorrect.');
+            $('#error').html(mode ? 'That ID has expired. Refresh to get a new one.' : 'Username or password is incorrect.');
     });
 }
 
